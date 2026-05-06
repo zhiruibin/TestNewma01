@@ -1,0 +1,114 @@
+.main-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.menu-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 2rem;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.menu-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(0, 200, 255, 0.6);
+}
+
+.menu-score {
+  font-size: 1.1rem;
+  color: #aaa;
+  text-align: center;
+  margin: 0;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+.menu-button {
+  position: relative;
+  padding: 0.7rem 2rem;
+  font-size: 1rem;
+  color: #fff;
+  background: rgba(0, 150, 255, 0.25);
+  border: 1px solid rgba(0, 150, 255, 0.5);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  min-width: 160px;
+  text-align: center;
+}
+
+.menu-button:hover {
+  background: rgba(0, 150, 255, 0.45);
+  border-color: rgba(0, 200, 255, 0.8);
+}
+
+.menu-button:active {
+  background: rgba(0, 150, 255, 0.6);
+}
+
+.menu-button[data-focused="true"] {
+  background: rgba(0, 150, 255, 0.6);
+  border-color: rgba(255, 140, 0, 1);
+  transform: scale(1.05);
+}
+
+.menu-button[data-focused="true"]::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid rgba(255, 140, 0, 1);
+}
+
+.controls-info {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  max-width: 320px;
+  width: 100%;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.controls-info h3 {
+  font-size: 0.95rem;
+  color: #ccc;
+  margin: 0 0 0.6rem 0;
+  text-align: center;
+}
+
+.controls-info p {
+  font-size: 0.8rem;
+  color: #999;
+  margin: 0.3rem 0;
+  line-height: 1.5;
+}
+
+.version-info {
+  font-size: 0.7rem;
+  color: #555;
+  text-align: center;
+  margin: 0;
+}

@@ -1,0 +1,54 @@
+.game-board-container {
+  position: relative;
+  border: 4px solid #4a9eff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pixi-container {
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.overlay-message {
+  color: #ffffff;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(74, 158, 255, 0.8),
+               0 0 20px rgba(74, 158, 255, 0.6),
+               0 0 40px rgba(74, 158, 255, 0.4);
+s
+  line-height: 1.8;
+}
+
+.pause-menu {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(74, 158, 255, 0.8),
+               0 0 20px rgba(74, 158, 255, 0.6),
+               0 0 40px rgba(74, 158, 255, 0.4);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.pause-menu .buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+}

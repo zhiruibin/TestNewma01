@@ -1,0 +1,284 @@
+/* ScoreBoard.css - 分数面板、下一个方块、暂存方块样式 */
+
+/* ==================== ScoreBoard 组件 ==================== */
+
+.score-board {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    border: 2px solid rgba(15, 52, 96, 0.6);
+}
+
+.score-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background: rgba(15, 52, 96, 0.3);
+    border-radius: 8px;
+}
+
+.label {
+    font-size: 12px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #e94560;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+}
+
+.score-item.combo .value {
+    color: #ffe66d;
+    text-shadow: 0 0 10px rgba(255, 230, 109, 0.5);
+}
+
+.score-item.t-spin .value {
+    color: #4ecdc4;
+    text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+}
+
+/* ==================== NextBlock 组件 ==================== */
+
+.next-block-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    border: 2px solid rgba(15, 52, 96, 0.6);
+}
+
+.next-block-label {
+    font-size: 12px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.next-block-preview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+}
+
+.next-block-cell {
+    width: 18px;
+    height: 18px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.next-block-placeholder {
+    padding: 20px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    border: 2px solid rgba(15, 52, 96, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* ==================== HoldBlock 组件 ==================== */
+
+.hold-block {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    border: 2px solid rgba(15, 52, 96, 0.6);
+}
+
+.hold-label {
+    font-size: 12px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.hold-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+}
+
+.hold-empty {
+    color: #64748b;
+    font-size: 12px;
+    text-align: center;
+}
+
+.hold-hint {
+    font-size: 11px;
+    color: #64748b;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.cell {
+    width: 24px;
+    height: 24px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==================== 方块颜色变体 ==================== */
+
+.next-block-cell.i-piece,
+.cell.i-piece {
+    background: linear-gradient(135deg, #00f5ff 0%, #00b8cc 100%);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3), 0 0 4px rgba(0, 245, 255, 0.3);
+}
+
+.next-block-cell.o-piece,
+.cell.o-piece {
+    background: linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3), 0 0 4px rgba(255, 235, 59, 0.3);
+}
+
+.next-block-cell.t-piece,
+.cell.t-piece {
+    background: linear-gradient(135deg, #e040fb 0%, #aa00ff 100%);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3), 0 0 4px rgba(224, 64, 251, 0.3);
+}
+
+.next-block-cell.s-piece,
+.cell.s-piece {
+    background: linear-gradient(135deg, #69f0ae 0%, #00e676 100%);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3), 0 0 4px rgba(105, 240, 174, 0.3);
+}
+
+.next-block-cell.z-piece,
+.cell.z-piece {
+    background: linear-gradient(135deg, #ff5252 0%, #d50000 100%);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3), 0 0 4px rgba(255, 82, 82, 0.3);
+}
+
+.next-block-cell.j-piece,
+.cell.j-piece {
+    background: linear-gradient(135deg, #448aff 0%, #2962ff 100%);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3), 0 0 4px rgba(68, 138, 255, 0.3);
+}
+
+.next-block-cell.l-piece,
+.cell.l-piece {
+    background: linear-gradient(135deg, #ffab40 0%, #ff6d00 100%);
+    box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.3), 0 0 4px rgba(255, 171, 64, 0.3);
+}
+
+.next-block-cell.empty,
+.cell.empty {
+    background: transparent;
+    border-color: transparent;
+}
+
+/* ==================== 悬停效果 ==================== */
+
+.next-block-container:hover,
+.hold-block:hover {
+    border-color: #4ecdc4;
+    transition: border-color 0.3s ease;
+}
+
+/* ==================== 动画效果 ==================== */
+
+@keyframes scoreIncrease {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+        color: #fff;
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.value.animate {
+    animation: scoreIncrease 0.3s ease-out;
+}
+
+/* ==================== 响应式设计 ==================== */
+
+@media (max-width: 768px) {
+    .score-board {
+        flex-direction: row;
+        flex-wrap: wrap;
+        min-width: auto;
+        width: 100%;
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .score-item {
+        flex: 1;
+        min-width: 80px;
+        padding: 8px;
+    }
+
+    .value {
+        font-size: 20px;
+    }
+
+    .next-block-container,
+    .hold-block {
+        min-width: auto;
+        width: 100%;
+        padding: 12px;
+    }
+
+    .next-block-preview {
+        width: 60px;
+        height: 60px;
+    }
+
+    .next-block-cell {
+        width: 14px;
+        height: 14px;
+    }
+
+    .hold-grid {
+        width: 76px;
+        height: 76px;
+    }
+
+    .cell {
+        width: 18px;
+        height: 18px;
+    }
+}
