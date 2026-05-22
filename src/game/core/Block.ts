@@ -292,6 +292,10 @@ public rotate(piece: Tetromino, clockwise: boolean): number {
 
     private static bag: BlockType[] = [];
 
+    public static resetBag(): void {
+        Block.bag = [];
+    }
+
 public static createRandom(): Block {
     if (Block.bag.length === 0) {
         Block.bag = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];

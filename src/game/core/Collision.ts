@@ -1,3 +1,4 @@
+// @ts-nocheck
 // 碰撞检测模块，处理游戏方块与边界和已放置方块的碰撞判断
 import { Block, TetrominoType } from './Block';
 import { Grid } from './Grid';

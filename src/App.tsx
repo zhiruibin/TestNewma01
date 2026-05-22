@@ -14,14 +14,9 @@ import ScoreHistory from './components/ui/ScoreHistory';
 import './styles/App.css';
 
 const App: React.FC = () => {
-const {
+  const {
     status,
     score,
-    level,
-    lines,
-    combo,
-holdPiece,
-    nextPiece,
     startGame,
     pauseGame,
     resumeGame,
@@ -30,11 +25,11 @@ holdPiece,
     moveRight,
     moveDown,
     rotate,
-hardDrop,
+    hardDrop,
     hold,
   } = useGameStore();
 
-  const { showSettings, setShowSettings, showScoreHistory, setShowScoreHistory, theme } = useUIStore();
+  const { showSettings, setShowSettings, showScoreHistory, setShowScoreHistory } = useUIStore();
 const { playSfx, playMusic, stopMusic } = useAudioStore();
 
   const gameBoardRef = useRef(null);
@@ -153,11 +148,6 @@ hold,
     playMusic();
   };
 
-  const handleRestartGame = () => {
-    resetGame();
-    startGame();
-    playMusic();
-  };
 
 return (
     <div className="app-container">
@@ -178,7 +168,7 @@ return (
       <div className="game-container">
         {/* Left Panel - Hold Block */}
         <div className="left-panel">
-<HoldBlock block={holdPiece} />
+<HoldBlock />
           <div className="controls-info">
             <h3>Controls</h3>
             <p>← → : Move</p>
@@ -197,14 +187,14 @@ return (
 
         {/* Right Panel - Next Block & Score */}
         <div className="right-panel">
-          <NextBlock blocks={nextPiece} />
-          <ScoreBoard score={score} level={level} lines={lines} combo={combo} />
+          <NextBlock />
+          <ScoreBoard />
         </div>
       </div>
 
       {/* Overlays */}
       {status === 'idle' && (
-        <MainMenu onStartGame={handleStartGame} onOpenSettings={() => setShowSettings(true)} onOpenCredits={() => {}} onOpenScoreHistory={() => setShowScoreHistory(true)} />
+        <MainMenu onStartGame={handleStartGame} onOpenSettings={() => setShowSettings(true)} onOpenScoreHistory={() => setShowScoreHistory(true)} />
       )}
       {status === 'paused' && (
         <PauseMenu
@@ -222,7 +212,6 @@ return (
 
       {status === 'gameover' && (
         <GameOver
-          score={score}
           onRestart={() => {
             resetGame();
             startGame();
@@ -239,7 +228,7 @@ return (
         <Settings onClose={() => setShowSettings(false)} />
       )}
       {showScoreHistory && (
-        <ScoreHistory onClose={() => setShowScoreHistory(false)} />
+          <ScoreHistory />
       )}
 </div>
   );

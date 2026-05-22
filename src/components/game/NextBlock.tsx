@@ -12,7 +12,7 @@ const BLOCK_SIZE = 20;
 // NextBlock 组件，显示下一个即将出现的方块
 const PREVIEW_GRID_SIZE = 4;
 
-const NextBlock: React.FC = ({ className = '' }) => {
+const NextBlock: React.FC<NextBlockProps> = ({ className = '' }) => {
     const nextPiece = useGameStore((state) => state.nextPiece);
 
     if (!nextPiece) {

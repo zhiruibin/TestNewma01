@@ -66,7 +66,7 @@ const initialState = {
   windowHeight: 0,
 };
 
-export const useUIStore = create((set) => ({
+export const useUIStore = create<UIState>((set) => ({
   ...initialState,
 
   setShowMainMenu: (show) => set({ showMainMenu: show }),

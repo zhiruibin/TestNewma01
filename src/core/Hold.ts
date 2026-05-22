@@ -1,4 +1,4 @@
-import { Block, BlockType } from './Block';
+import { BlockType } from './Block';
 
 /*** 暂存系统 - 管理俄罗斯方块的暂存和交换功能
  ** 功能：

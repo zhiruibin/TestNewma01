@@ -8,7 +8,37 @@ import { Hold } from '../core/Hold';
 import { LineClear, ClearEffect } from '../game/core/LineClear';
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
-export interface ScoreRecord {
+const LOCK_DELAY_MS = 500;
+const MAX_LOCK_DELAY_RESETS = 15;
+
+// SRS Wall Kick offset tables
+// Keys: 'fromRotation>toRotation', values: 5 [dx, dy] pairs (SRS convention: dy positive = up)
+const WALL_KICK_OFFSETS: Record<string, [number, number][]> = {
+  // Clockwise
+  '0>1': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  '1>2': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  '2>3': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+  '3>0': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  // Counter-clockwise
+  '0>3': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+  '3>2': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  '2>1': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  '1>0': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+};
+
+const WALL_KICK_OFFSETS_I: Record<string, [number, number][]> = {
+  // Clockwise
+  '0>1': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  '1>2': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+  '2>3': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  '3>0': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  // Counter-clockwise
+  '0>3': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  '3>2': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  '2>1': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+  '1>0': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+};
+interface ScoreRecord {
   score: number;
   level: number;
   lines: number;
@@ -31,6 +61,7 @@ interface GameStore {
   lines: number;
   combo: number;
   b2b: boolean;
+  tSpin: boolean;
 highScore: number;
   clearEffects: Array<{ type: string; rows: number[]; intensity: number; duration: number; cellTypes: (string | null)[][] }>;
   consumeEffects: () => Array<{ type: string; rows: number[]; intensity: number; duration: number; cellTypes: (string | null)[][] }>;
@@ -48,6 +79,7 @@ highScore: number;
   startGame: () => void;
   pauseGame: () => void;
   resumeGame: () => void;
+  startGameLoop: () => void;
   gameOver: () => void;
   resetGame: () => void;
 
@@ -64,16 +96,34 @@ highScore: number;
   clearLines: () => number;
   updateGhost: () => void;
 
-  // Score Actions
-  addScore: (points: number) => void;
-  addLines: (count: number) => void;
+  // Lock Delay
+  lockDelayTimer: NodeJS.Timeout | null;
+  gameLoopInterval: number | null;
+  lockDelayResets: number;
+  lastFrameTime: number;
+  dropAccumulator: number;
+  startLockDelay: () => void;
+  resetLockDelay: () => void;
+  clearLockDelay: () => void;
+  isOnGround: () => boolean;
   incrementCombo: () => void;
   resetCombo: () => void;
   setB2B: (value: boolean) => void;
   updateHighScore: () => void;
+  addScore: (points: number) => void;
+  addLines: (count: number) => void;
   scoreHistory: ScoreRecord[];
   addScoreRecord: () => void;
   clearScoreHistory: () => void;
+
+  // Settings
+  difficulty: 'easy' | 'normal' | 'hard';
+  setDifficulty: (level: 'easy' | 'normal' | 'hard') => void;
+  showGhost: boolean;
+  setShowGhost: (show: boolean) => void;
+  showGrid: boolean;
+  setShowGrid: (show: boolean) => void;
+  resetHighScore: () => void;
 }
 
 const createInitialGrid = (): (Cell | null)[][] => {
@@ -82,7 +132,7 @@ const createInitialGrid = (): (Cell | null)[][] => {
   );
 };
 
-export const useGameStore = create((set, get) => ({
+export const useGameStore = create<GameStore>((set, get) => ({
   // Initial State
   status: 'idle',
   grid: createInitialGrid(),
@@ -97,7 +147,11 @@ export const useGameStore = create((set, get) => ({
   lines: 0,
   combo: -1,
   b2b: false,
-highScore: 0,
+  tSpin: false,
+highScore: (() => { try { return parseInt(localStorage.getItem('tetris_highScore') || '0', 10); } catch { return 0; } })(),
+  difficulty: 'normal' as const,
+  showGhost: true,
+  showGrid: true,
   scoreHistory: (() => { try { return JSON.parse(localStorage.getItem('tetris_scoreHistory') || '[]'); } catch { return []; } })(),
   clearEffects: [],
 
@@ -108,8 +162,12 @@ highScore: 0,
   holdSystem: null,
   gameLoopInterval: null,
   lineClearSystem: null,
-
+  lockDelayTimer: null,
+  lockDelayResets: 0,
+  lastFrameTime: 0,
+  dropAccumulator: 0,
   initGame: () => {
+    Block.resetBag();
     const block = new Block('I');
     const gridSystem = new Grid(BOARD_WIDTH, BOARD_HEIGHT);
     const scoreSystem = new Score();
@@ -165,84 +223,79 @@ highScore: 0,
       lines: 0,
       combo: -1,
       b2b: false,
-      highScore: 0,
     });
     get().updateGhost();
   },
-startGame: () => {
-    // 直接重新初始化游戏系统
+  startGame: () => {
     get().initGame();
-    
-    // 获取最新状态
-    const { gameLoopInterval, level } = get();
-    
-    // 清除之前的游戏循环
-    if (gameLoopInterval) {
-      clearTimeout(gameLoopInterval);
-    }
-    
-    set({ status: 'playing' });
-    
-    // 启动游戏循环
-    const runGameLoop = () => {
-      const { status: currentStatus, level: currentLevel } = get();
-      if (currentStatus !== 'playing') {
-        return;
-      }
-
-      get().moveDown();
-      const interval = Math.max(100, 1000 - (currentLevel - 1) * 100);
-      const timeout = setTimeout(runGameLoop, interval);
-      set({ gameLoopInterval: timeout as any });
-    };
-
-    const interval = Math.max(100, 1000 - (level - 1) * 100);
-    const timeout = setTimeout(runGameLoop, interval);
-    set({ gameLoopInterval: timeout as any });
+    get().startGameLoop();
   },
   pauseGame: () => {
-  const { gameLoopInterval } = get();
-  
-  // 清除游戏循环
-  if (gameLoopInterval) {
-    clearTimeout(gameLoopInterval);
-  }
-  
-    set({ status: 'paused', gameLoopInterval: null });
-  },
-  resumeGame: () => {
+    get().clearLockDelay();
     const { gameLoopInterval } = get();
     
-    // 确保没有正在运行的游戏循环
+    // 清除游戏循环
     if (gameLoopInterval) {
-      clearTimeout(gameLoopInterval);
+      cancelAnimationFrame(gameLoopInterval);
     }
     
-    set({ status: 'playing' });
-    
-    // 重新启动游戏循环
-    const runGameLoop = () => {
-      const { status: currentStatus, level } = get();
+    set({ status: 'paused', gameLoopInterval: null, lockDelayTimer: null, lastFrameTime: 0, dropAccumulator: 0 });
+  },
+  resumeGame: () => {
+    get().startGameLoop();
+  },
+  startGameLoop: () => {
+    const { gameLoopInterval } = get();
+
+    // 清除旧的游戏循环
+    if (gameLoopInterval) {
+      cancelAnimationFrame(gameLoopInterval);
+    }
+
+    set({ status: 'playing', lastFrameTime: 0, dropAccumulator: 0 });
+
+    const gameLoop = (timestamp: number) => {
+      const { status: currentStatus, level, lastFrameTime, dropAccumulator } = get();
       if (currentStatus !== 'playing') {
         return;
       }
 
-      get().moveDown();
-      const interval = Math.max(100, 1000 - (level - 1) * 100);
-      const timeout = setTimeout(runGameLoop, interval);
-      set({ gameLoopInterval: timeout as any });
+      let currentLastFrameTime = lastFrameTime;
+      let currentDropAccumulator = dropAccumulator;
+
+      if (currentLastFrameTime === 0) {
+        currentLastFrameTime = timestamp;
+      }
+
+      const delta = timestamp - currentLastFrameTime;
+      currentDropAccumulator += delta;
+
+      const dropInterval = Math.max(100, 1000 - (level - 1) * 100);
+
+      if (currentDropAccumulator >= dropInterval) {
+        get().moveDown();
+        currentDropAccumulator -= dropInterval;
+      }
+
+      currentLastFrameTime = timestamp;
+      set({ lastFrameTime: currentLastFrameTime, dropAccumulator: currentDropAccumulator });
+
+      if (get().status === 'playing') {
+        const id = requestAnimationFrame(gameLoop);
+        set({ gameLoopInterval: id });
+      }
     };
 
-    const interval = Math.max(100, 1000 - (get().level - 1) * 100);
-    const timeout = setTimeout(runGameLoop, interval);
-    set({ gameLoopInterval: timeout as any });
+    const id = requestAnimationFrame(gameLoop);
+    set({ gameLoopInterval: id });
   },
   gameOver: () => {
+    get().clearLockDelay();
     const { gameLoopInterval } = get();
     
     // 停止游戏循环
     if (gameLoopInterval) {
-      clearTimeout(gameLoopInterval);
+      cancelAnimationFrame(gameLoopInterval);
     }
     
     // 更新最高分
@@ -251,14 +304,15 @@ startGame: () => {
     // 记录本次游戏得分
     get().addScoreRecord();
     
-    set({ status: 'gameover', gameLoopInterval: null });
+    set({ status: 'gameover', gameLoopInterval: null, lockDelayTimer: null, lockDelayResets: 0, lastFrameTime: 0, dropAccumulator: 0 });
   },
   resetGame: () => {
+    get().clearLockDelay();
     const { gameLoopInterval } = get();
 
     // 清除之前的游戏循环
     if (gameLoopInterval) {
-      clearTimeout(gameLoopInterval);
+      cancelAnimationFrame(gameLoopInterval);
     }
 
     // 手动重置所有游戏状态，不调用 initGame()（避免 status 被设为 playing）
@@ -282,9 +336,15 @@ startGame: () => {
       holdSystem: null,
       lineClearSystem: null,
       gameLoopInterval: null,
+      lockDelayTimer: null,
+      lockDelayResets: 0,
+      lastFrameTime: 0,
+      dropAccumulator: 0,
     });
   },
   lockPiece: () => {
+    get().clearLockDelay();
+    set({ lockDelayResets: 0 });
     console.log('[lockPiece] Entry - currentPiece:', get().currentPiece?.type, 'at', get().currentPiece?.x, get().currentPiece?.y);
     const { currentPiece, nextPiece, gridSystem, gameLoopInterval, lineClearSystem, status } = get();
     if (!currentPiece || !gridSystem || !nextPiece || !lineClearSystem) {
@@ -462,7 +522,7 @@ get().addLines(lineClearResult.linesCleared);
     };
 
     if (gridSystem.checkCollision(testPiece)) {
-      get().lockPiece();
+      get().startLockDelay();
       return false;
     }
 
@@ -488,6 +548,11 @@ get().addLines(lineClearResult.linesCleared);
 
     set({ currentPiece: testPiece });
     get().updateGhost();
+    if (get().isOnGround()) {
+      get().resetLockDelay();
+    } else {
+      get().clearLockDelay();
+    }
     return true;
   },
 
@@ -508,9 +573,13 @@ get().addLines(lineClearResult.linesCleared);
 
     set({ currentPiece: testPiece });
     get().updateGhost();
+    if (get().isOnGround()) {
+      get().resetLockDelay();
+    } else {
+      get().clearLockDelay();
+    }
     return true;
   },
-
   rotate: (clockwise: boolean) => {
     const { currentPiece, gridSystem } = get();
     if (!currentPiece || !gridSystem) {
@@ -529,26 +598,44 @@ get().addLines(lineClearResult.linesCleared);
       : (currentRotation - 1 + totalRotations) % totalRotations;
     const newShape = shapes[newRotation];
 
-    const testPiece: Tetromino = {
-      ...currentPiece,
-      shape: newShape,
-      rotation: newRotation,
-    };
+    // SRS Wall Kick: select offset table by piece type
+    const offsetTable = currentPiece.type === 'I' ? WALL_KICK_OFFSETS_I : WALL_KICK_OFFSETS;
+    const kickKey = `${currentRotation}>${newRotation}`;
+    const kicks = offsetTable[kickKey];
 
-    if (gridSystem.checkCollision(testPiece)) {
-      return false;
+    if (kicks) {
+      for (const [dx, dy] of kicks) {
+        const testPiece: Tetromino = {
+          ...currentPiece,
+          shape: newShape,
+          rotation: newRotation,
+          x: currentPiece.x + dx,
+          y: currentPiece.y - dy, // SRS y-axis: positive dy = up, screen y = down
+        };
+        if (!gridSystem.checkCollision(testPiece)) {
+          set({ currentPiece: testPiece });
+          get().updateGhost();
+          if (get().isOnGround()) {
+            get().resetLockDelay();
+          } else {
+            get().clearLockDelay();
+          }
+          return true;
+        }
+      }
     }
 
-    set({ currentPiece: testPiece });
-    get().updateGhost();
-    return true;
+    return false;
   },
 
   hardDrop: () => {
+    get().clearLockDelay();
     let dropDistance = 0;
     while (get().moveDown()) {
       dropDistance++;
     }
+    get().clearLockDelay();
+    get().lockPiece();
     get().addScore(dropDistance * 2);
     return dropDistance;
   },
@@ -599,6 +686,55 @@ get().addLines(lineClearResult.linesCleared);
 
     get().updateGhost();
   },
+
+  isOnGround: () => {
+    const { currentPiece, gridSystem } = get();
+    if (!currentPiece || !gridSystem) {
+      return false;
+    }
+    const testPiece: Tetromino = {
+      ...currentPiece,
+      y: currentPiece.y + 1,
+    };
+    return gridSystem.checkCollision(testPiece);
+  },
+
+  startLockDelay: () => {
+    const { lockDelayTimer } = get();
+    if (lockDelayTimer) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      set({ lockDelayTimer: null });
+      get().lockPiece();
+    }, LOCK_DELAY_MS);
+    set({ lockDelayTimer: timer as any });
+  },
+
+  resetLockDelay: () => {
+    const { lockDelayTimer, lockDelayResets } = get();
+    if (lockDelayResets >= MAX_LOCK_DELAY_RESETS) {
+      return;
+    }
+    if (lockDelayTimer) {
+      clearTimeout(lockDelayTimer);
+    }
+    const newResets = lockDelayResets + 1;
+    const timer = setTimeout(() => {
+      set({ lockDelayTimer: null });
+      get().lockPiece();
+    }, LOCK_DELAY_MS);
+    set({ lockDelayTimer: timer as any, lockDelayResets: newResets });
+  },
+
+  clearLockDelay: () => {
+    const { lockDelayTimer } = get();
+    if (lockDelayTimer) {
+      clearTimeout(lockDelayTimer);
+    }
+    set({ lockDelayTimer: null });
+  },
+
   updateHighScore: () => {
     const { score, highScore } = get();
     if (score > highScore) {
@@ -621,6 +757,13 @@ get().addLines(lineClearResult.linesCleared);
   clearScoreHistory: () => {
     set({ scoreHistory: [] });
     localStorage.removeItem('tetris_scoreHistory');
+  },
+  setDifficulty: (level: 'easy' | 'normal' | 'hard') => set({ difficulty: level }),
+  setShowGhost: (show: boolean) => set({ showGhost: show }),
+  setShowGrid: (show: boolean) => set({ showGrid: show }),
+  resetHighScore: () => {
+    set({ highScore: 0 });
+    localStorage.removeItem('tetris_highScore');
   },
   consumeEffects: () => {
     const effects = get().clearEffects;

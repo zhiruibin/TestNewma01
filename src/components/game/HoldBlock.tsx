@@ -7,7 +7,7 @@ interface HoldBlockProps {
 }
 
 const HoldBlock: React.FC<HoldBlockProps> = ({ cellSize = 25 }) => {
-    const { holdPiece, canHold } = useGameStore();
+    const { holdPiece } = useGameStore();
 
     const getTetrominoShape = (type: TetrominoType | null): number[][] => {
         if (!type) return [];

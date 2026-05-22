@@ -1,5 +1,5 @@
 // 游戏网格系统核心模块，负责方块碰撞检测和锁定逻辑
-import { Tetromino, TetrominoType, Cell } from '../../types';
+import { Tetromino, Cell } from '../../types';
 
 export class Grid {
   private width: number;
@@ -120,16 +120,11 @@ public clearLines(rows?: number[]): number {
     return true;
   }
 
- private removeLine(y: number): void {
-    console.log('[Grid] 消除行:', y);
-    // 将上方行向下移动填补空缺
-    for (let row = y; row > 0; row--) {
-      this.cells[row] = this.cells[row - 1].map(cell => cell ? { ...cell } : null);
-    }
-    this.cells[0] = Array.from({ length: this.width }, () => null);
-  }
 
   public isEmpty(x: number, y: number): boolean {
+    if (y < 0 || y >= this.height || x < 0 || x >= this.width) {
+      return false;
+    }
     return this.cells[y][x] === null;
   }
 public checkCollision(tetromino: Tetromino): boolean {

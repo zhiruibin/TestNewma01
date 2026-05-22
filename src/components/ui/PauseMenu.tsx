@@ -12,7 +12,7 @@ interface PauseMenuProps {
 
 // 暂停菜单组件，显示游戏暂停时的选项
 // 暂停菜单组件，显示游戏暂停时的选项
-export const PauseMenu: React.FC = ({
+export const PauseMenu: React.FC<PauseMenuProps> = ({
   onResume,
   onRestart,
   onQuitToMenu,

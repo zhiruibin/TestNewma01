@@ -124,10 +124,13 @@ useEffect(() => {
   }, [grid]);
 
   // Render ghost block
+  // Render ghost block
   useEffect(() => {
-    if (!ghostContainerRef.current || !ghostBlock) return;
+    if (!ghostContainerRef.current) return;
 
     ghostContainerRef.current.removeChildren();
+
+    if (!ghostBlock) return;
 
     const shape = ghostBlock.shape;
     const color = 0x888888;

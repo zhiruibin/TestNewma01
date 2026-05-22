@@ -24,7 +24,7 @@ const defaultKeyBindings: KeyBinding[] = [
   { action: '暂停', key: 'P', code: 'KeyP' },
 ];
 
-const Settings: React.FC = ({ onClose }) => {
+const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const {
     difficulty,
     setDifficulty,
@@ -48,7 +48,7 @@ const Settings: React.FC = ({ onClose }) => {
 
   const [keyBindings, setKeyBindings] = useState(defaultKeyBindings);
   const [activeTab, setActiveTab] = useState('game');
-  const [isRecording, setIsRecording] = useState(null);
+  const [isRecording, setIsRecording] = useState<string | null>(null);
 
   const handleDifficultyChange = (level: 'easy' | 'normal' | 'hard') => {
     setDifficulty(level);

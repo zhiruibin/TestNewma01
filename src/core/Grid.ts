@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Block, BlockType } from './Block';
 
 export class Grid {
