@@ -2,9 +2,9 @@ import { create } from 'zustand';
 import { Tetromino, GameState, GameStatus, Cell } from '../../types';
 import { Block, BlockType, BLOCK_SHAPES } from '../game/core/Block';
 import { Grid } from '../game/core/Grid';
-import { Score } from '../core/Score';
-import { Level } from '../core/Level';
-import { Hold } from '../core/Hold';
+import { ScoreSystem as Score } from '../game/core/Score';
+import { Level } from '../game/core/Level';
+import { Hold } from '../game/core/Hold';
 import { LineClear, ClearEffect } from '../game/core/LineClear';
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
@@ -345,21 +345,17 @@ highScore: (() => { try { return parseInt(localStorage.getItem('tetris_highScore
   lockPiece: () => {
     get().clearLockDelay();
     set({ lockDelayResets: 0 });
-    console.log('[lockPiece] Entry - currentPiece:', get().currentPiece?.type, 'at', get().currentPiece?.x, get().currentPiece?.y);
     const { currentPiece, nextPiece, gridSystem, gameLoopInterval, lineClearSystem, status } = get();
     if (!currentPiece || !gridSystem || !nextPiece || !lineClearSystem) {
-      console.log('[lockPiece] Early return - missing systems or pieces');
       return;
     }
 
     gridSystem.lockPiece(currentPiece);
-    console.log('[lockPiece] gridSystem.lockPiece() completed - grid updated with locked piece');
 
     const boardData = gridSystem.getCells();
     const pendingRows = lineClearSystem.findCompleteRows();
     const clearedCellTypes = pendingRows.map(row => boardData[row].map(cell => cell?.type ?? null));
     const lineClearResult = lineClearSystem.checkAndClear();
-    console.log('[lockPiece] LineClear result:', lineClearResult);
 
     if (lineClearResult && lineClearResult.linesCleared > 0) {
       const { combo, level } = get();
@@ -424,7 +420,6 @@ get().addLines(lineClearResult.linesCleared);
   clearLines: () => {
     const { gridSystem, scoreSystem, levelSystem } = get();
     const clearedLines = gridSystem.clearLines();
-    console.log('[clearLines] gridSystem.clearLines() returned:', clearedLines, 'lines');
     if (clearedLines > 0) {
       const { combo, b2b, level } = get();
       const isTetris = clearedLines === 4;

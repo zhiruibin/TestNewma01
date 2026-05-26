@@ -31,8 +31,6 @@ public lockPiece(tetromino: Tetromino): void {
     const shape = tetromino.shape;
     const offsetX = tetromino.x;
     const offsetY = tetromino.y;
-    console.log(`[Grid] lockPiece: 方块类型=${tetromino.type}, 位置=(${offsetX}, ${offsetY}), 形状=${shape.length}x${shape[0]?.length}`);
-    let cellsWritten = 0;
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
         if (shape[y][x]) {
@@ -44,12 +42,10 @@ public lockPiece(tetromino: Tetromino): void {
               color: tetromino.color,
               type: tetromino.type
             };
-            cellsWritten++;
           }
         }
       }
     }
-    console.log(`[Grid] lockPiece: 写入单元格数量=${cellsWritten}`);
   }
 
   public getWidth(): number {  // 参数 piece 包含方块的形状、位置和旋转状态
@@ -112,11 +108,9 @@ public clearLines(rows?: number[]): number {
     for (let x = 0; x < this.width; x++) {
       const cell = this.cells[y][x];
       if (cell === null || !cell.filled) {
-        console.log(`[Grid] 行 ${y} 不完整：单元格 [${x}, ${y}] 为空或未完成填充`);
         return false;
       }
     }
-    console.log(`[Grid] 行 ${y} 完整，可以消除`);
     return true;
   }
 
@@ -199,7 +193,6 @@ public isGameOver(tetromino: Tetromino): boolean {
   }
 
   public clearRow(y: number): void {
-    console.log('[Grid] clearRow:', y);
     // 将上方行向下移动填补空缺
     for (let row = y; row > 0; row--) {
       this.cells[row] = this.cells[row - 1].map(cell => cell ? { ...cell } : null);
