@@ -113,7 +113,6 @@ private callbacks: Set<InputCallback>;
       this.gamepadState.clear();
       this.axisState.clear();
     }
-    console.log(`Gamepad disconnected: ${event.gamepad.id}`);
   };
 
   private getKeyAction(key: string): GameAction | null {

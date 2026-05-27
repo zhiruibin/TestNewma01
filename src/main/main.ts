@@ -65,7 +65,6 @@ ipcMain.handle('get-game-settings', () => {
 
 ipcMain.handle('save-game-settings', (_, settings) => {
   // Save settings to file or store
-  console.log('Saving settings:', settings);
   return true;
 });
 
@@ -76,7 +75,6 @@ ipcMain.handle('get-high-scores', () => {
 
 ipcMain.handle('save-high-score', (_, score) => {
   // Save high score to storage
-  console.log('Saving high score:', score);
   return true;
 });
 
