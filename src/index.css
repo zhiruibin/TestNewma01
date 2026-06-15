@@ -235,7 +235,6 @@ html, body {
     text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
 }
 
-}
 
 .game-over .high-score-badge {
     display: inline-block;
@@ -290,14 +289,7 @@ html, body {
 .game-over .button-group .btn {
     min-width: 200px;
 }
-    font-size: 36px;
-    color: var(--success-color);
-    margin: 20px 0;
-    text-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
-}
 
-s
-s
 
 /* 设置面板 */
 .settings-panel {

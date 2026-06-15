@@ -142,6 +142,7 @@ export interface SpeedSettings {
 // ==================== 输入相关类型 ====================
 
 /** 输入动作 */
+/** 输入动作 */
 export type InputAction = 
     | 'moveLeft'
     | 'moveRight'
@@ -151,9 +152,8 @@ export type InputAction =
     | 'rotateCCW'
     | 'hold'
     | 'pause'
+    | 'resume'
     | 'restart';
-
-/** 按键映射 */
 export interface KeyMapping {
     moveLeft: string[];
     moveRight: string[];
@@ -275,8 +275,12 @@ export interface GameStatistics {
     bestScore: number;
     bestLines: number;
     averageScore: number;
+    tSpinCount: number;
+    tetrisCount: number;
+    maxCombo: number;
+    totalActions: number;
+    startTimeMs: number;
 }
-
 // ==================== 成就相关类型 ====================
 
 /** 成就类型 */

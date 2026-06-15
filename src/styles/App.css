@@ -19,7 +19,7 @@ body {
     flex-direction: column;
     width: 100%;
     height: 100vh;
-    overflow: auto;
+    overflow: hidden;
     justify-content: center;
     align-items: center;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -31,6 +31,7 @@ body {
     align-items: center;
     padding: 12px 24px;
     border-bottom: 1px solid rgba(74, 158, 255, 0.2);
+    flex-shrink: 0;
 }
 
 .app-header h1 {
@@ -61,13 +62,13 @@ body {
 .game-container {
     display: flex;
     flex-direction: row;
-    flex: none;
-    width: 740px;
+    flex: 1 1 auto;
+    max-width: 740px;
     flex-shrink: 0;
     gap: 20px;
     padding: 20px;
-    align-items: flex-start;
-    overflow: visible;
+    align-items: center;
+    overflow: hidden;
 }
 
 .left-panel {
@@ -97,6 +98,7 @@ body {
     gap: 15px;
     width: 180px;
     flex-shrink: 0;
+    overflow: hidden;
 }
 .controls-info {
     background: rgba(255, 255, 255, 0.08);

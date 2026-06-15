@@ -5,10 +5,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.85);
+  background: radial-gradient(ellipse at center, #0a0a2e 0%, #000010 70%);
+  overflow: hidden;
 }
 
+/* ===== 粒子画布 ===== */
+.particle-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== 布局容器 ===== */
 .menu-container {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,6 +33,7 @@
   overflow-y: auto;
 }
 
+/* ===== 标题分数 ===== */
 .menu-title {
   font-size: 2.5rem;
   font-weight: bold;
@@ -35,12 +50,14 @@
   margin: 0;
 }
 
+/* ===== 菜单按钮 ===== */
 .menu-buttons {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.2rem;
 }
+
 .menu-button {
   position: relative;
   padding: 0.7rem 2rem;
@@ -81,6 +98,7 @@
   border-left: 8px solid rgba(255, 140, 0, 1);
 }
 
+/* ===== 控制说明 ===== */
 .controls-info {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -88,25 +106,99 @@
   padding: 1rem 1.2rem;
   max-width: 320px;
   width: 100%;
-  max-height: 40vh;
-  overflow-y: auto;
+  margin: 0 0 0.6rem 0;
+  text-align: center;
+  cursor: pointer;
 }
 
 .controls-info h3 {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #ccc;
   margin: 0 0 0.6rem 0;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.controls-info h3::after {
+  content: '▸';
+  margin-left: 0.4rem;
+  display: inline-block;
+  transition: transform 0.25s ease;
+  font-size: 0.75rem;
+}
+
+.controls-info.expanded h3::after {
+  transform: rotate(90deg);
+}
+
+.controls-content {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.controls-info.expanded .controls-content {
+  max-height: 300px;
+  opacity: 1;
+}
+
+.controls-info h3::after {
+  content: '▸';
+  margin-left: 0.4rem;
+  display: inline-block;
+  transition: transform 0.25s ease;
+  font-size: 0.75rem;
+}
+
+.controls-info.expanded h3::after {
+  transform: rotate(90deg);
+}
+
+.controls-content {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.controls-info.expanded .controls-content {
+  max-height: 300px;
+  opacity: 1;
+}
+
+.control-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.35rem 0;
+}
+
+.control-item .key {
+  display: inline-block;
+  min-width: 60px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #0cf;
+  background: rgba(0, 200, 255, 0.1);
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-radius: 4px;
   text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.controls-info p {
+.control-item .description {
   font-size: 0.8rem;
-  color: #999;
-  margin: 0.3rem 0;
-  line-height: 1.5;
+  color: #bbb;
+  line-height: 1.6;
 }
 
-.version-info {
+/* ===== 版本信息 ===== */
+.version-info p {
   font-size: 0.7rem;
   color: #555;
   text-align: center;

@@ -1,5 +1,5 @@
 // 游戏主面板组件，负责使用 Pixi.js 渲染游戏区域
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
 import { useGameStore } from '../../store/gameStore';
 import { Tetromino, TetrominoType, Cell } from '../../types';
@@ -31,15 +31,51 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
   const animationFrameRef = useRef<number>(0);
   const particleContainerRef = useRef<PIXI.Container | null>(null);
   const particleSystemRef = useRef<ParticleSystem | null>(null);
+
   const grid = useGameStore((state: any) => state.grid as Cell[][]);
   const currentBlock = useGameStore((state: any) => state.currentPiece as Tetromino | null);
   const ghostBlock = useGameStore((state: any) => state.ghostPiece as Tetromino | null);
   const gameState = useGameStore((state: any) => state.status as 'idle' | 'playing' | 'paused' | 'gameover');
   const clearEffects = useGameStore((state: any) => state.clearEffects);
   const consumeEffects = useGameStore((state: any) => state.consumeEffects);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const clearAnimationRows = useGameStore((state: any) => state.clearAnimationRows as number[]);
+  const clearAnimationActive = useGameStore((state: any) => state.clearAnimationActive as boolean);
+  const readyGoPhase = useGameStore((state: any) => state.readyGoPhase as 'ready' | 'go' | null);
+  const clearLabel = useGameStore((state) => state.clearLabel);
 
-useEffect(() => {
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [showClearLabel, setShowClearLabel] = useState(false);
+  const [clearLabelText, setClearLabelText] = useState('');
+  const [shakeActive, setShakeActive] = useState(false);
+
+
+  // Handle clear label display
+  useEffect(() => {
+    if (clearLabel) {
+      setClearLabelText(clearLabel);
+      setShowClearLabel(true);
+
+      const timer = setTimeout(() => {
+        setShowClearLabel(false);
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [clearLabel]);
+
+  // Screen shake for Tetris
+  useEffect(() => {
+    if (clearLabel === 'TETRIS!' || clearLabel.includes('TETRIS')) {
+      setShakeActive(true);
+      const timer = setTimeout(() => {
+        setShakeActive(false);
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [clearLabel]);
+
+  // Initialize PixiJS application
+  useEffect(() => {
     if (!containerRef.current || isInitialized) return;
 
     const app = new PIXI.Application({
@@ -99,7 +135,6 @@ useEffect(() => {
     };
   }, []);
 
-
   // Render grid
   useEffect(() => {
     if (!gridContainerRef.current || !grid) return;
@@ -123,7 +158,6 @@ useEffect(() => {
     }
   }, [grid]);
 
-  // Render ghost block
   // Render ghost block
   useEffect(() => {
     if (!ghostContainerRef.current) return;
@@ -153,62 +187,24 @@ useEffect(() => {
 
   // Render current block
   useEffect(() => {
-    if (!blockContainerRef.current) {
-      console.error('[GameBoard] blockContainerRef is null');
-      return;
-    }
+    if (!blockContainerRef.current) return;
 
-    if (!currentBlock) {
-      console.log('[GameBoard] Skip render: currentBlock is null/undefined');
-      return;
-    }
+    if (!currentBlock) return;
 
-    const validation = {
-      hasType: !!currentBlock.type,
-      hasX: typeof currentBlock.x === 'number',
-      hasY: typeof currentBlock.y === 'number',
-      hasShape: !!currentBlock.shape,
-      shapeValid: Array.isArray(currentBlock.shape) && currentBlock.shape.length > 0,
-      shapeRowValid: currentBlock.shape[0] && Array.isArray(currentBlock.shape[0]),
-    };
-
-    console.log('[GameBoard] Block data validation:', validation);
-
-    if (!validation.hasType || !validation.hasX || !validation.hasY) {
-      console.error('[GameBoard] Invalid block data:', currentBlock);
+    if (!currentBlock.type || typeof currentBlock.x !== 'number' || typeof currentBlock.y !== 'number') {
       return;
     }
 
     const shape = currentBlock.shape;
-    if (!validation.shapeValid || !validation.shapeRowValid) {
-      console.error('[GameBoard] Invalid shape:', shape);
+    if (!Array.isArray(shape) || shape.length === 0 || !Array.isArray(shape[0])) {
       return;
-    }
-
-console.log('[GameBoard] Rendering block:', {
-      type: currentBlock.type,
-      x: currentBlock.x,
-      y: currentBlock.y,
-      shape: shape,
-      shapeSize: `${shape.length}x${shape[0].length}`,
-      position: `(${currentBlock.x * CELL_SIZE}, ${currentBlock.y * CELL_SIZE})`
-    });
-
-    // 详细调试：输出 shape 数组每个元素的值
-    console.log('[GameBoard] Shape array details:');
-    for (let y = 0; y < shape.length; y++) {
-      console.log(`[GameBoard]   Row ${y}:`, shape[y], 'values:', shape[y].map((v: number) => v).join(', '));
     }
 
     blockContainerRef.current.removeChildren();
 
     const color = BLOCK_COLORS[currentBlock.type as TetrominoType];
-    if (color === undefined) {
-      console.error('[GameBoard] Unknown block type:', currentBlock.type);
-      return;
-    }
+    if (color === undefined) return;
 
-    let renderCount = 0;
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
         if (shape[y][x]) {
@@ -220,12 +216,9 @@ console.log('[GameBoard] Rendering block:', {
           graphics.x = (currentBlock.x + x) * CELL_SIZE;
           graphics.y = (currentBlock.y + y) * CELL_SIZE;
           blockContainerRef.current.addChild(graphics);
-          renderCount++;
         }
       }
     }
-
-    console.log(`[GameBoard] Rendered ${renderCount} blocks for ${currentBlock.type}`);
   }, [currentBlock]);
 
   // 粒子特效：订阅消除效果并触发粒子发射
@@ -243,6 +236,31 @@ console.log('[GameBoard] Rendering block:', {
           }
         }
       }
+
+      // Extended particle effects based on clear type
+      const isTetris = effect.rows.length >= 4;
+      const isB2B = effect.isBackToBack;
+      const combo = effect.combo || 0;
+
+      // Tetris: full-screen flash particles
+      if (isTetris && particleSystemRef.current) {
+        for (const row of effect.rows) {
+          particleSystemRef.current.emitFlash(row, 0xffffff, 30);
+        }
+      }
+
+      // B2B: lightning particles
+      if (isB2B && particleSystemRef.current) {
+        for (const row of effect.rows) {
+          particleSystemRef.current.emitLightning(row, 0xffff00, 15);
+        }
+      }
+
+      // Combo: number fly-out particles
+      if (combo > 1 && particleSystemRef.current) {
+        const midRow = effect.rows[Math.floor(effect.rows.length / 2)];
+        particleSystemRef.current.emitComboNumber(midRow, combo, 0x00ffff);
+      }
     }
     consumeEffects();
   }, [clearEffects]);
@@ -254,13 +272,35 @@ console.log('[GameBoard] Rendering block:', {
     return '';
   };
 
+  const getReadyGoText = () => {
+    if (readyGoPhase === 'ready') return 'READY';
+    if (readyGoPhase === 'go') return 'GO!';
+    return '';
+  };
+
+  const isReadyGoActive = readyGoPhase === 'ready' || readyGoPhase === 'go';
+
   return (
-    <div ref={ref} className="game-board-container">
+    <div ref={ref} className={`game-board-container${shakeActive ? ' screen-shake' : ''}`}>
       <div ref={containerRef} className="pixi-container" />
-      {(gameState === 'idle' || gameState === 'paused' || gameState === 'gameover') && (
+      {(gameState === 'idle' || gameState === 'paused' || gameState === 'gameover') && !isReadyGoActive && (
         <div className="overlay">
           <div className="overlay-message">
             {getOverlayMessage()}
+          </div>
+        </div>
+      )}
+      {isReadyGoActive && (
+        <div className="overlay ready-go-overlay">
+          <div className={`ready-go-text ${readyGoPhase === 'go' ? 'go-text' : 'countdown-text'}`}>
+            {getReadyGoText()}
+          </div>
+        </div>
+      )}
+      {showClearLabel && (
+        <div className="clear-label-container">
+          <div className={`clear-label${clearLabelText.includes('T-Spin') ? ' clear-label--tspin' : ''}${clearLabelText.includes('TETRIS') ? ' clear-label--tetris' : ''}${clearLabelText.includes('Back-to-Back') ? ' clear-label--b2b' : ''}${clearLabelText.includes('Combo') ? ' clear-label--combo' : ''}`}>
+            {clearLabelText}
           </div>
         </div>
       )}

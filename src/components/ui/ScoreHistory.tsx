@@ -6,15 +6,28 @@ import './ScoreHistory.css';
 type SortKey = 'score' | 'date' | 'lines' | 'level';
 type SortDir = 'asc' | 'desc';
 
-export const ScoreHistory: React.FC = () => {
-  const scoreHistory = useGameStore((state) => state.scoreHistory);
-  const clearScoreHistory = useGameStore((state) => state.clearScoreHistory);
-  const setShowScoreHistory = useUIStore((state) => state.setShowScoreHistory);
+type ScoreRecord = {
+  score: number;
+  date: string;
+  lines: number;
+  level: number;
+};
 
+type Stats = {
+  totalGames: number;
+  avgScore: number;
+  totalLines: number;
+};
+
+const RANK_BADGES: Record<number, string> = {
+  1: '🥇',
+  2: '🥈',
+  3: '🥉',
+};
+
+const useSortedScoreHistory = (scoreHistory: ScoreRecord[]) => {
   const [sortKey, setSortKey] = useState<SortKey>('score');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [confirmClear, setConfirmClear] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
 
   const sortedHistory = useMemo(() => {
     const sorted = [...scoreHistory].sort((a, b) => {
@@ -62,11 +75,125 @@ export const ScoreHistory: React.FC = () => {
     return sortDir === 'asc' ? ' ↑' : ' ↓';
   };
 
-  const rankBadges: Record<number, string> = {
-    1: '🥇',
-    2: '🥈',
-    3: '🥉',
-  };
+  return { sortedHistory, bestScore, stats, handleSort, getSortIcon };
+};
+
+const EmptyState: React.FC = () => (
+  <div className="score-history-empty">
+    <span className="score-history-empty-icon">🎮</span>
+    <p>暂无游戏记录</p>
+  </div>
+);
+
+const BestScoreBanner: React.FC<{ bestScore: ScoreRecord }> = ({ bestScore }) => (
+  <div className="score-history-best">
+    <span className="score-history-best-icon">🏆</span>
+    <span className="score-history-best-label">最佳成绩</span>
+    <span className="score-history-best-score">
+      {bestScore.score}
+    </span>
+    <span className="score-history-best-date">
+      {bestScore.date}
+    </span>
+  </div>
+);
+
+const StatsSummary: React.FC<{ stats: Stats }> = ({ stats }) => (
+  <div className="score-history-stats">
+    <span>共 {stats.totalGames} 局</span>
+    <span className="score-history-stats-dot">·</span>
+    <span>平均 {stats.avgScore} 分</span>
+    <span className="score-history-stats-dot">·</span>
+    <span>累计 {stats.totalLines} 行</span>
+  </div>
+);
+
+const ScoreTable: React.FC<{
+  sortedHistory: ScoreRecord[];
+  handleSort: (key: SortKey) => void;
+  getSortIcon: (key: SortKey) => string;
+}> = ({ sortedHistory, handleSort, getSortIcon }) => (
+  <div className="score-history-table-wrapper">
+    <table className="score-history-table">
+      <thead>
+        <tr>
+          <th className="col-rank">排名</th>
+          <th
+            className="col-score score-history-sortable"
+            onClick={() => handleSort('score')}
+          >
+            分数{getSortIcon('score')}
+          </th>
+          <th
+            className="col-level score-history-sortable"
+            onClick={() => handleSort('level')}
+          >
+            等级{getSortIcon('level')}
+          </th>
+          <th
+            className="col-lines score-history-sortable"
+            onClick={() => handleSort('lines')}
+          >
+            行数{getSortIcon('lines')}
+          </th>
+          <th
+            className="col-date score-history-sortable"
+            onClick={() => handleSort('date')}
+          >
+            日期{getSortIcon('date')}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {sortedHistory.map((record, index) => (
+          <tr
+            key={`${record.date}-${record.score}-${index}`}
+            className={`rank-${index + 1}`}
+          >
+            <td className="col-rank">
+              {RANK_BADGES[index + 1] ? (
+                <span className="score-history-rank-badge">
+                  {RANK_BADGES[index + 1]}
+                </span>
+              ) : (
+                <span className="score-history-rank-number">
+                  {index + 1}
+                </span>
+              )}
+            </td>
+            <td className="col-score">{record.score}</td>
+            <td className="col-level">{record.level}</td>
+            <td className="col-lines">{record.lines}</td>
+            <td className="col-date">{record.date}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
+
+const ClearButton: React.FC<{
+  confirmClear: boolean;
+  onClear: () => void;
+}> = ({ confirmClear, onClear }) => (
+  <div className="score-history-footer">
+    <button
+      className={`score-history-clear-btn${confirmClear ? ' confirming' : ''}`}
+      onClick={onClear}
+    >
+      {confirmClear ? '⚠️ 确定清除？' : '🗑️ 清除记录'}
+    </button>
+  </div>
+);
+
+export const ScoreHistory: React.FC = () => {
+  const scoreHistory = useGameStore((state) => state.scoreHistory);
+  const clearScoreHistory = useGameStore((state) => state.clearScoreHistory);
+  const setShowScoreHistory = useUIStore((state) => state.setShowScoreHistory);
+
+  const { sortedHistory, bestScore, stats, handleSort, getSortIcon } = useSortedScoreHistory(scoreHistory);
+  const [isClosing, setIsClosing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const handleClose = useCallback(() => {
     if (isClosing) return;
@@ -76,6 +203,15 @@ export const ScoreHistory: React.FC = () => {
       setIsClosing(false);
     }, 300);
   }, [isClosing, setShowScoreHistory]);
+
+  const handleClear = useCallback(() => {
+    if (confirmClear) {
+      clearScoreHistory();
+      setConfirmClear(false);
+    } else {
+      setConfirmClear(true);
+    }
+  }, [confirmClear, clearScoreHistory]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -109,112 +245,17 @@ export const ScoreHistory: React.FC = () => {
           </button>
         </div>
         {scoreHistory.length === 0 ? (
-          <div className="score-history-empty">
-            <span className="score-history-empty-icon">🎮</span>
-            <p>暂无游戏记录</p>
-          </div>
+          <EmptyState />
         ) : (
           <>
-            {bestScore && (
-              <div className="score-history-best">
-                <span className="score-history-best-icon">🏆</span>
-                <span className="score-history-best-label">最佳成绩</span>
-                <span className="score-history-best-score">
-                  {bestScore.score}
-                </span>
-                <span className="score-history-best-date">
-                  {bestScore.date}
-                </span>
-              </div>
-            )}
-
-            {stats && (
-              <div className="score-history-stats">
-                <span>共 {stats.totalGames} 局</span>
-                <span className="score-history-stats-dot">·</span>
-                <span>平均 {stats.avgScore} 分</span>
-                <span className="score-history-stats-dot">·</span>
-                <span>累计 {stats.totalLines} 行</span>
-              </div>
-            )}
-
-            <div className="score-history-table-wrapper">
-              <table className="score-history-table">
-                <thead>
-                  <tr>
-                    <th>排名</th>
-                    <th
-                      className="score-history-sortable"
-                      onClick={() => handleSort('score')}
-                    >
-                      分数{getSortIcon('score')}
-                    </th>
-                    <th
-                      className="score-history-sortable"
-                      onClick={() => handleSort('level')}
-                    >
-                      等级{getSortIcon('level')}
-                    </th>
-                    <th
-                      className="score-history-sortable"
-                      onClick={() => handleSort('lines')}
-                    >
-                      行数{getSortIcon('lines')}
-                    </th>
-                    <th
-                      className="score-history-sortable"
-                      onClick={() => handleSort('date')}
-                    >
-                      日期{getSortIcon('date')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedHistory.map((record, index) => (
-                    <tr
-                      key={index}
-                      className={`rank-${index + 1} ${
-                        index % 2 === 0
-                          ? 'score-history-row-even'
-                          : 'score-history-row-odd'
-                      }`}
-                    >
-                      <td>
-                        {rankBadges[index + 1] ? (
-                          <span className="score-history-rank-badge">
-                            {rankBadges[index + 1]}
-                          </span>
-                        ) : (
-                          <span className="score-history-rank-number">
-                            {index + 1}
-                          </span>
-                        )}
-                      </td>
-                      <td>{record.score}</td>
-                      <td>{record.level}</td>
-                      <td>{record.lines}</td>
-                      <td>{record.date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="score-history-footer">
-              <button
-                className={`score-history-clear-btn${confirmClear ? ' confirming' : ''}`}
-                onClick={() => {
-                  if (confirmClear) {
-                    clearScoreHistory();
-                    setConfirmClear(false);
-                  } else {
-                    setConfirmClear(true);
-                  }
-                }}
-              >
-                {confirmClear ? '⚠️ 确定清除？' : '🗑️ 清除记录'}
-              </button>
-            </div>
+            {bestScore && <BestScoreBanner bestScore={bestScore} />}
+            {stats && <StatsSummary stats={stats} />}
+            <ScoreTable
+              sortedHistory={sortedHistory}
+              handleSort={handleSort}
+              getSortIcon={getSortIcon}
+            />
+            <ClearButton confirmClear={confirmClear} onClear={handleClear} />
           </>
         )}
       </div>

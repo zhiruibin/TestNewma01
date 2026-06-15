@@ -13,7 +13,7 @@
   z-index: 1000;
 }
 
-.settings-modal {
+.settings-panel {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border-radius: 16px;
   padding: 32px;
@@ -34,14 +34,14 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.settings-title {
+.settings-header h2 {
   font-size: 24px;
   font-weight: 600;
   color: #ffffff;
   margin: 0;
 }
 
-.close-btn {
+.settings-close-btn {
   background: transparent;
   border: none;
   color: #ffffff;
@@ -52,43 +52,11 @@
   transition: background-color 0.2s;
 }
 
-.close-btn:hover {
+.settings-close-btn:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Tabs */
-.settings-tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 0;
-}
-
-.tab {
-  padding: 10px 20px;
-  background: transparent;
-  border: none;
-  color: #888888;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-  margin-bottom: -1px;
-}
-
-.tab:hover {
-  color: #e0e0e0;
-}
-
-.tab.active {
-  color: #4CAF50;
-  border-bottom-color: #4CAF50;
-}
-
-/* Content */
-.settings-content {
+.settings-body {
   min-height: 200px;
 }
 
@@ -105,35 +73,20 @@
   letter-spacing: 1px;
 }
 
-/* Setting Item */
-.setting-item {
+/* Difficulty Options */
+.difficulty-options {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
+}
+
+.difficulty-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.setting-label {
-  color: #ffffff;
-  font-size: 14px;
-}
-
-.setting-description {
-  color: #888888;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-/* Button Group (for difficulty selection etc.) */
-.button-group {
-  display: flex;
-  gap: 8px;
-}
-
-.button-group button {
-  padding: 8px 16px;
-  border-radius: 6px;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -143,61 +96,68 @@
   color: #ffffff;
 }
 
-.button-group button:hover {
+.difficulty-btn:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.button-group button.active {
+.difficulty-btn.active {
   background-color: #4CAF50;
   border-color: #4CAF50;
   color: #ffffff;
 }
 
-/* Toggle Button */
-.toggle-btn {
-  position: relative;
-  width: 48px;
-  height: 24px;
-  background-color: #333333;
-  border-radius: 24px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  padding: 0;
+.difficulty-label {
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.toggle-btn::before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: #ffffff;
-  transition: transform 0.3s;
-  border-radius: 50%;
+.difficulty-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.toggle-btn.active {
-  background-color: #4CAF50;
+.difficulty-btn.active .difficulty-desc {
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.toggle-btn.active::before {
-  transform: translateX(24px);
-}
+/* Slider Group */
 
-/* Slider */
-.slider-container {
+.slider-group {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.volume-slider {
+.slider-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.slider-label {
+  display: inline-block;
+  min-width: 60px;
+  font-size: 14px;
+  color: #ffffff;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.slider-value {
+  min-width: 50px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4CAF50;
+  flex-shrink: 0;
+}
+
+.settings-slider {
   -webkit-appearance: none;
   appearance: none;
-  width: 100%;
+  flex: 1;
   height: 6px;
   border-radius: 3px;
   background: #333333;
@@ -205,7 +165,7 @@
   transition: opacity 0.2s;
 }
 
-.volume-slider::-webkit-slider-thumb {
+.settings-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;
@@ -216,11 +176,11 @@
   transition: background-color 0.2s;
 }
 
-.volume-slider::-webkit-slider-thumb:hover {
+.settings-slider::-webkit-slider-thumb:hover {
   background: #45a049;
 }
 
-.volume-slider::-moz-range-thumb {
+.settings-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -229,142 +189,190 @@
   border: none;
 }
 
-/* Key Bindings */
-.key-bindings {
+
+/* Toggle Group */
+.toggle-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
-.key-binding-item {
+.toggle-row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.key-binding-label {
+.toggle-label {
   color: #ffffff;
   font-size: 14px;
-  min-width: 100px;
 }
 
-.key-btn {
-  background-color: #2a2a4a;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  padding: 8px 12px;
-  color: #ffffff;
-  font-size: 14px;
-  min-width: 80px;
-  text-align: center;
+.toggle-btn {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background-color: #333333;
+  border-radius: 24px;
+  border: none;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: background-color 0.3s;
+  padding: 0;
+  flex-shrink: 0;
 }
 
-.key-btn:hover {
-  border-color: rgba(255, 255, 255, 0.4);
+.toggle-btn.on {
+  background-color: #4CAF50;
 }
 
-.key-btn:focus {
-  outline: none;
-  border-color: #4CAF50;
+.toggle-btn.off {
+  background-color: #333333;
 }
 
-.key-btn.listening {
-  border-color: #ff9800;
-  animation: pulse 1s infinite;
+.toggle-knob {
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: transform 0.3s;
+  border-radius: 50%;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+.toggle-btn.on .toggle-knob {
+  transform: translateX(24px);
 }
 
-/* Reset Button */
-.reset-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
+/* Settings Footer */
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Action Buttons */
+.btn-danger {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e53935;
+  background-color: transparent;
+  color: #e53935;
+  width: 100%;
+}
+
+.btn-danger:hover {
+  background-color: #e53935;
+  color: #ffffff;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background-color: transparent;
   color: #ffffff;
-  margin-top: 12px;
 }
 
-.reset-btn:hover {
+.btn-secondary:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Footer */
-.settings-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Done Button */
-.done-btn {
-  padding: 10px 24px;
+.btn-warning {
+  padding: 10px 20px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  border: none;
-  background-color: #4CAF50;
+  border: 1px solid #ff9800;
+  background-color: transparent;
+  color: #ff9800;
+}
+
+.btn-warning:hover {
+  background-color: #ff9800;
   color: #ffffff;
 }
 
-.done-btn:hover {
-  background-color: #45a049;
+/* Reset Confirm */
+.reset-confirm {
+  margin-top: 12px;
+  padding: 16px;
+  background-color: rgba(229, 57, 53, 0.1);
+  border: 1px solid rgba(229, 57, 53, 0.3);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.reset-confirm p {
+  color: #e0e0e0;
+  font-size: 14px;
+  margin: 0 0 12px 0;
+}
+
+.reset-confirm-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
 
 /* Scrollbar */
-.settings-modal::-webkit-scrollbar {
+.settings-panel::-webkit-scrollbar {
   width: 8px;
 }
 
-.settings-modal::-webkit-scrollbar-track {
+.settings-panel::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
 }
 
-.settings-modal::-webkit-scrollbar-thumb {
+.settings-panel::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
-.settings-modal::-webkit-scrollbar-thumb:hover {
+.settings-panel::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
 /* Responsive */
 @media (max-width: 600px) {
-  .settings-modal {
+  .settings-panel {
     min-width: 90%;
     padding: 24px;
   }
 
-  .setting-item {
+  .difficulty-options {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
   }
 
-  .settings-tabs {
-    overflow-x: auto;
+  .difficulty-btn {
+    flex-direction: row;
+    justify-content: space-between;
   }
 
-  .tab {
-    padding: 8px 14px;
-    font-size: 13px;
+  .toggle-row {
+    flex-direction: row;
+  }
+
+  .slider-row {
+    gap: 4px;
+  }
+
+  .reset-confirm-btns {
+    flex-direction: column;
   }
 }

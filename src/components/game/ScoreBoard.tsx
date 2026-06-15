@@ -1,23 +1,20 @@
-// 导入 React 和必要的类型定义
 import React from 'react';
 import { useGameStore } from '../../store/gameStore';
 import './ScoreBoard.css';
 
-// ScoreBoard 组件属性接口定义
 interface ScoreBoardProps {
   className?: string;
 }
 
 export const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = '' }) => {
-  // ScoreBoard 组件，显示当前分数和最高分
-  const { score, level, lines, combo, tSpin } = useGameStore((state) => ({
-    score: state.score,
-    level: state.level,
-    lines: state.lines,
-    combo: state.combo,
-    // 渲染分数显示区域
-    tSpin: state.tSpin,
-  }));
+  const score = useGameStore((state) => state.score);
+  const level = useGameStore((state) => state.level);
+  const lines = useGameStore((state) => state.lines);
+  const combo = useGameStore((state) => state.combo);
+  const b2b = useGameStore((state) => state.b2b);
+  const clearLabel = useGameStore((state) => state.clearLabel);
+
+  const comboDisplay = combo >= 0 ? `${combo + 1}x` : '';
 
   return (
     <div className={`score-board ${className}`}>
@@ -36,17 +33,22 @@ export const ScoreBoard: React.FC<ScoreBoardProps> = ({ className = '' }) => {
         <div className="value">{lines}</div>
       </div>
 
-      {combo > 0 && (
+      {combo >= 0 && (
         <div className="score-item combo">
           <div className="label">COMBO</div>
-          <div className="value">{combo}x</div>
+          <div className="value">{comboDisplay}</div>
         </div>
       )}
 
-      {tSpin && (
-        <div className="score-item t-spin">
-          <div className="label">T-SPIN</div>
-          <div className="value">ACTIVE</div>
+      {b2b && (
+        <div className="score-item b2b">
+          <div className="label b2b-label">BACK-TO-BACK</div>
+        </div>
+      )}
+
+      {clearLabel && (
+        <div className="score-item clear-label">
+          <div className="label clear-label-text">{clearLabel}</div>
         </div>
       )}
     </div>
