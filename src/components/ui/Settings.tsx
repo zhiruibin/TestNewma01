@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { useParticleBackground } from '../../hooks/useParticleBackground';
 import { useGameStore } from '../../store/gameStore';
 import { useAudioStore } from '../../store/audioStore';
 import './Settings.css';
@@ -28,6 +29,9 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const setVolume = useAudioStore((s) => s.setVolume);
   const resetHighScores = useGameStore((s) => s.resetHighScores);
 
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useParticleBackground(canvasRef);
+
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleResetHighScores = () => {
@@ -37,6 +41,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
   return (
     <div className="settings-overlay" onClick={onClose}>
+      <canvas ref={canvasRef} className="settings-particle-canvas" />
       <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
         <div className="settings-header">
           <h2>设置</h2>

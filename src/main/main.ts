@@ -21,10 +21,23 @@ function createWindow(): void {
 
   // Load the app
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5173');
+    const devPorts = [5173, 5174];
+    const tryLoadURL = async (index: number): Promise<void> => {
+      if (index >= devPorts.length) {
+        console.error('Failed to load dev server on all ports');
+        return;
+      }
+      const port = devPorts[index];
+      try {
+        await mainWindow!.loadURL(`http://localhost:${port}`);
+      } catch {
+        await tryLoadURL(index + 1);
+      }
+    };
+    tryLoadURL(0);
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../index.html'));
   }
 
   // Show window when ready
@@ -63,7 +76,7 @@ ipcMain.handle('get-game-settings', () => {
   };
 });
 
-ipcMain.handle('save-game-settings', (_, settings) => {
+ipcMain.handle('save-game-settings', (_, __) => {
   // Save settings to file or store
   return true;
 });
@@ -73,7 +86,7 @@ ipcMain.handle('get-high-scores', () => {
   return [];
 });
 
-ipcMain.handle('save-high-score', (_, score) => {
+ipcMain.handle('save-high-score', (_, __) => {
   // Save high score to storage
   return true;
 });

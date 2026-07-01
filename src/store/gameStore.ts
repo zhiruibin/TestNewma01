@@ -76,8 +76,8 @@ interface GameStore {
   highScore: number;
   clearLabel: string;
   setClearLabel: (label: string) => void;
-  clearEffects: Array<{ type: string; rows: number[]; intensity: number; duration: number; cellTypes: (string | null)[][] }>;
-  consumeEffects: () => Array<{ type: string; rows: number[]; intensity: number; duration: number; cellTypes: (string | null)[][] }>;
+  clearEffects: Array<{ type: string; rows: number[]; intensity: number; duration: number; cellTypes: (string | null)[][]; isBackToBack?: boolean; combo?: number }>;
+  consumeEffects: () => Array<{ type: string; rows: number[]; intensity: number; duration: number; cellTypes: (string | null)[][]; isBackToBack?: boolean; combo?: number }>;
 
   // Clear Animation
   clearAnimationActive: boolean;
@@ -483,7 +483,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       const effects = lineClearSystem.getPendingEffects();
       if (effects.length > 0) {
-        set({ clearEffects: effects.map(e => ({ ...e, cellTypes: clearedCellTypes })) });
+        set({ clearEffects: effects.map(e => ({ ...e, cellTypes: clearedCellTypes, isBackToBack: lineClearResult.backToBack, combo: lineClearResult.combo })) });
       }
 
       get().levelSystem?.addLinesCleared(lineClearResult.linesCleared);

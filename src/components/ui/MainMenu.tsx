@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { useKeyboardNavigation } from '../../hooks/useKeyboardNavigation';
+import { useParticleBackground } from '../../hooks/useParticleBackground';
 import './MainMenu.css';
 
 interface MainMenuProps {
@@ -33,7 +34,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const callbacks = [onStartGame, onOpenSettings, onOpenScoreHistory];
   const menuContainerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationFrameRef = useRef<number>(0);
   const [controlsExpanded, setControlsExpanded] = useState(false);
   const { focusedIndex } = useKeyboardNavigation(
     MENU_ITEMS.length,
@@ -41,90 +41,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     menuContainerRef,
   );
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    interface Particle {
-      x: number;
-      y: number;
-      size: number;
-      speedY: number;
-      speedX: number;
-      opacity: number;
-      life: number;
-      maxLife: number;
-    }
-
-    const particles: Particle[] = [];
-    const MAX_PARTICLES = 80;
-
-    const createParticle = (): Particle => ({
-      x: Math.random() * canvas.width,
-      y: canvas.height + Math.random() * 100,
-      size: Math.random() * 3 + 1,
-      speedY: -(Math.random() * 0.8 + 0.3),
-      speedX: (Math.random() - 0.5) * 0.4,
-      opacity: Math.random() * 0.6 + 0.2,
-      life: 0,
-      maxLife: Math.random() * 400 + 300,
-    });
-
-    for (let i = 0; i < MAX_PARTICLES; i++) {
-      const p = createParticle();
-      p.life = Math.random() * p.maxLife;
-      p.y = Math.random() * canvas.height;
-      particles.push(p);
-    }
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        p.life++;
-        p.y += p.speedY;
-        p.x += p.speedX;
-
-        if (p.life >= p.maxLife || p.y < -20 || p.x < -20 || p.x > canvas.width + 20) {
-          particles[i] = createParticle();
-          continue;
-        }
-
-        const lifeRatio = 1 - p.life / p.maxLife;
-        const alpha = p.opacity * lifeRatio;
-
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
-        gradient.addColorStop(0, `rgba(0, 255, 255, ${alpha})`);
-        gradient.addColorStop(0.4, `rgba(0, 200, 255, ${alpha * 0.6})`);
-        gradient.addColorStop(1, `rgba(0, 100, 255, 0)`);
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
-        ctx.fill();
-      }
-
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      cancelAnimationFrame(animationFrameRef.current);
-      window.removeEventListener('resize', resizeCanvas);
-    };
-  }, []);
+  useParticleBackground(canvasRef);
   return (
     <div className="main-menu">
       <canvas ref={canvasRef} className="particle-canvas" />

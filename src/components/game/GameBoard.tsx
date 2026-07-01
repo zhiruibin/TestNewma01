@@ -251,15 +251,17 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
 
       // B2B: lightning particles
       if (isB2B && particleSystemRef.current) {
-        for (const row of effect.rows) {
-          particleSystemRef.current.emitLightning(row, 0xffff00, 15);
-        }
+        const minRow = Math.min(...effect.rows);
+        const maxRow = Math.max(...effect.rows);
+        particleSystemRef.current.emitLightning(minRow, maxRow, 0xffff00, effect.intensity);
       }
 
       // Combo: number fly-out particles
       if (combo > 1 && particleSystemRef.current) {
         const midRow = effect.rows[Math.floor(effect.rows.length / 2)];
-        particleSystemRef.current.emitComboNumber(midRow, combo, 0x00ffff);
+        const x = (GRID_WIDTH / 2) * CELL_SIZE;
+        const y = midRow * CELL_SIZE;
+        particleSystemRef.current.emitComboText(combo, x, y, 0x00ffff);
       }
     }
     consumeEffects();

@@ -34,6 +34,8 @@ export interface ClearEffect {
   rows: number[];
   intensity: number;
   duration: number;
+  isBackToBack?: boolean;
+  combo?: number;
 }
 
 /** 消除逻辑与特效管理类
@@ -320,6 +322,7 @@ public findCompleteRows(): number[] {
         rows,
         intensity: Math.min(this.combo / 10, 1.0),
         duration: 500,
+        combo: this.combo,
       });
     }
 
@@ -330,6 +333,7 @@ public findCompleteRows(): number[] {
         rows,
         intensity: 0.8,
         duration: 600,
+        isBackToBack: true,
       });
     }
   }

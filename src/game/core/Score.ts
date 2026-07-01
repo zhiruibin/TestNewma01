@@ -143,14 +143,13 @@ export class ScoreSystem {
     }
     
     if (isBtbAction) {
-      if (isBtb || this.state.btb) {
-        this.state.btb = true;
+      if (this.state.btb) {
         this.state.btbCount++;
         points = Math.floor(points * this.config.btbMultiplier);
       } else {
-        this.state.btb = true;
         this.state.btbCount = 1;
       }
+      this.state.btb = true;
     }
     
     if (linesCleared > 0) {

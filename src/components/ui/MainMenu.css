@@ -144,29 +144,6 @@
   opacity: 1;
 }
 
-.controls-info h3::after {
-  content: '▸';
-  margin-left: 0.4rem;
-  display: inline-block;
-  transition: transform 0.25s ease;
-  font-size: 0.75rem;
-}
-
-.controls-info.expanded h3::after {
-  transform: rotate(90deg);
-}
-
-.controls-content {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-}
-
-.controls-info.expanded .controls-content {
-  max-height: 300px;
-  opacity: 1;
-}
 
 .control-item {
   display: flex;
