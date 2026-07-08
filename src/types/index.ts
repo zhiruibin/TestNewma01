@@ -242,9 +242,6 @@ export interface GameEvent {
     payload?: Record<string, unknown>;
     timestamp: number;
 }
-    timestamp: number;
-}
-
 /** 事件监听器 */
 export type EventListener = (event: GameEvent) => void;
 

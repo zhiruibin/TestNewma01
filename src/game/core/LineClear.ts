@@ -4,7 +4,7 @@ import { Block } from './Block';
 import { TetrominoType } from '../../types';
 import { ScoreSystem } from './Score';
 // LineClear 类，负责处理游戏行消除逻辑
-/*** 消除行信息
+/** 消除行信息
  */
 export interface ClearLineInfo {
   rowIndex: number;
@@ -12,21 +12,7 @@ export interface ClearLineInfo {
   isMini: boolean;
 }
 
- /*** 消除结果
-  */
-export interface ClearResult {
-export interface ClearResult {
-  linesCleared: number;
-  score: number;
-  isTSpin: boolean;
-  isMini: boolean;
-  combo: number;
-  backToBack: boolean;
-  clearedRows: number[];
-}
-
-/*** 消除特效数据
-/*** 消除特效数据
+/** 消除特效数据
  */
 export interface ClearEffect {
   type: 'line' | 'tetris' | 'combo' | 'tspin' | 'backToBack';
@@ -53,7 +39,7 @@ export class LineClear {
     this.scoreSystem = scoreSystem;
   }
 
-  /*** 检测并消除完整行
+  /** 检测并消除完整行
    * @param currentBlock 当前方块（用于 T-Spin 检测）
    * @returns 消除结果，如果没有消除则返回 null
    */
@@ -137,8 +123,8 @@ export class LineClear {
 
   }
 
-  /*** 查找所有完整的行
-public findCompleteRows(): number[] {
+  /** 查找所有完整的行 */
+  public findCompleteRows(): number[] {
     const completeRows: number[] = [];
     const height = this.grid.getHeight();
 
@@ -150,7 +136,7 @@ public findCompleteRows(): number[] {
 
     return completeRows;
   }
-  /*** 消除指定的行
+  /** 消除指定的行
    * @param rows 要消除的行索引数组
    */
   public clearRows(rows: number[]): void {
@@ -158,7 +144,7 @@ public findCompleteRows(): number[] {
     this.grid.clearLines(rows);
   }
 
-  /*** 检查一行是否为空
+   /** 检查一行是否为空
    * @param row 行数据
    * @returns 是否为空
    */
@@ -195,7 +181,7 @@ public findCompleteRows(): number[] {
     return { isTSpin, isMini };
   }
 
-  /*** 获取 T 方块的四个角位置
+   /** 获取 T 方块的四个角位置
    * @param position 方块位置
    * @returns 角位置数组
    */
@@ -209,7 +195,7 @@ public findCompleteRows(): number[] {
     ];
   }
 
-  /*** 检查角位置是否被填充
+   /** 检查角位置是否被填充
    * @param corner 角位置
    * @returns 是否被填充
    */
@@ -221,7 +207,7 @@ public findCompleteRows(): number[] {
     return cell !== null;
   }
 
-  /*** 检测 Mini T-Spin
+  /** 检测 Mini T-Spin
    * @param position 方块位置
    * @param corners 角位置
    * @returns 是否是 Mini T-Spin
@@ -306,7 +292,7 @@ public findCompleteRows(): number[] {
     }
   }
 
-  /*** 获取待处理的特效
+   /** 获取待处理的特效
    * @returns 特效数组
    */
   public getPendingEffects(): ClearEffect[] {
@@ -315,21 +301,21 @@ public findCompleteRows(): number[] {
     return effects;
   }
 
-  /*** 获取当前 Combo 数
+   /** 获取当前 Combo 数
    * @returns Combo 数
    */
   public getCombo(): number {
     return this.combo;
   }
 
-  /*** 获取 Back-to-Back 状态
+  /** 获取 Back-to-Back 状态
    * @returns 是否 Back-to-Back
    */
   public isBackToBack(): boolean {
     return this.backToBack;
   }
 
-  /*** 重置消除状态
+  /** 重置消除状态
    */
   public reset(): void {
     this.combo = 0;
@@ -338,14 +324,14 @@ public findCompleteRows(): number[] {
     this.pendingEffects = [];
   }
 
-  /*** 设置 Combo 数（用于游戏加载）
+  /** 设置 Combo 数（用于游戏加载）
    * @param combo Combo 数
    */
   public setCombo(combo: number): void {
     this.combo = combo;
   }
 
-  /*** 设置 Back-to-Back 状态（用于游戏加载）
+  /** 设置 Back-to-Back 状态（用于游戏加载）
    * @param value Back-to-Back 状态
    */
   public setBackToBack(value: boolean): void {

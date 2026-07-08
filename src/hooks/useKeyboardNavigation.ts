@@ -5,6 +5,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
  * @param onSelect   选中回调，接收当前聚焦的 index
  * @returns focusedIndex - 当前聚焦的菜单项索引
  */
+interface UseKeyboardNavigationReturn {
+  focusedIndex: number;
+}
+
 export function useKeyboardNavigation(
   itemCount: number,
   onSelect: (index: number) => void,

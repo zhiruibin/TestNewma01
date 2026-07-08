@@ -1,6 +1,7 @@
 // 游戏网格系统核心模块，负责方块碰撞检测和锁定逻辑
 import { Tetromino, Cell } from '../../types';
 
+// Grid 类，管理游戏板的网格状态和碰撞检测
 export class Grid {
   private width: number;
   private height: number;
@@ -13,7 +14,6 @@ export class Grid {
   }
 
   private createEmptyGrid(): (Cell | null)[][] {
-    // Grid 类，管理游戏板的网格状态和碰撞检测
     return Array.from({ length: this.height }, () =>
       Array.from({ length: this.width }, () => null)
     );
@@ -23,8 +23,10 @@ public reset(): void {
     this.cells = this.createEmptyGrid();
   }
 
+  // 参数 piece 包含方块的形状、位置和旋转状态
 
-public lockPiece(tetromino: Tetromino): void {
+  // 参数 piece 包含方块的形状、位置和旋转状态
+  public lockPiece(tetromino: Tetromino): void {
     const shape = tetromino.shape;
     const offsetX = tetromino.x;
     const offsetY = tetromino.y;
@@ -45,12 +47,11 @@ public lockPiece(tetromino: Tetromino): void {
     }
   }
 
-  public getWidth(): number {  // 参数 piece 包含方块的形状、位置和旋转状态
+  public getWidth(): number {
     return this.width;
   }
 
   public getHeight(): number {
-    // 遍历方块形状的每个单元格进行碰撞检测
     return this.height;
   }
 
@@ -61,13 +62,11 @@ public getCells(): (Cell | null)[][] {
   public getGrid(): number[][] {
     return this.cells.map(row =>
       row.map(cell => cell ? 1 : 0)
-    // 检查是否超出左右边界
     );
   }
 
   public getCell(x: number, y: number): Cell | null {
     if (this.isValidPosition(x, y)) {
-      // 检查是否超出底部边界
       return this.cells[y][x];
     }
     return null;
@@ -118,7 +117,8 @@ public clearLines(rows?: number[]): number {
     }
     return this.cells[y][x] === null;
   }
-public checkCollision(tetromino: Tetromino): boolean {
+  // 遍历方块形状的每个单元格进行碰撞检测
+  public checkCollision(tetromino: Tetromino): boolean {
     const shape = tetromino.shape;
     const offsetX = tetromino.x;
     const offsetY = tetromino.y;
@@ -128,8 +128,8 @@ public checkCollision(tetromino: Tetromino): boolean {
           const boardX = offsetX + x;
           const boardY = offsetY + y;
 
-          // Check bounds
-          if (!this.isValidPosition(boardX, boardY)) {
+          // 检查是否超出左右和底部边界
+          if (boardX < 0 || boardX >= this.width || boardY >= this.height) {
             return true;
           }
 
