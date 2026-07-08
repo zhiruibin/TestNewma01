@@ -256,7 +256,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const currentBlock = Block.createRandom();
     const currentPiece = createTetrominoFromBlock(currentBlock);
 
-    gridSystem.clear();
+    gridSystem.reset();
 
     set({
       block,

@@ -107,35 +107,6 @@ export class ParticleSystem {
     }
   }
 
-  emitScreenFlash(color: number = 0xffffff, intensity: number = 1.0): void {
-    const maxLife = 0.15 + 0.1 * intensity;
-
-    const graphics = new PIXI.Graphics();
-    graphics.beginFill(color, 0.6);
-    graphics.drawRect(0, 0, this.boardWidth, this.boardHeight);
-    graphics.endFill();
-    this.container.addChild(graphics);
-
-    const particle: Particle = {
-      x: 0,
-      y: 0,
-      vx: 0,
-      vy: 0,
-      life: maxLife,
-      maxLife,
-      alpha: 1,
-      size: 0,
-      color,
-      rotation: 0,
-      rotationSpeed: 0,
-      graphics,
-      isLarge: true,
-    };
-
-    this.particles.push(particle);
-  }
-
-  emitLightning(startRow: number, endRow: number, color: number = 0x88ccff, intensity: number = 1.0): void {
     const segments = Math.abs(endRow - startRow) + 1;
     const segmentHeight = this.cellSize;
     const startX = this.boardWidth / 2;

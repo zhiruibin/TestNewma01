@@ -23,9 +23,6 @@ public reset(): void {
     this.cells = this.createEmptyGrid();
   }
 
-  public clear(): void {
-    this.cells = this.createEmptyGrid();
-  }
 
 public lockPiece(tetromino: Tetromino): void {
     const shape = tetromino.shape;

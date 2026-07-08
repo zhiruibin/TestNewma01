@@ -239,7 +239,9 @@ export type GameEventType =
 /** 游戏事件 */
 export interface GameEvent {
     type: GameEventType;
-    payload?: Record;
+    payload?: Record<string, unknown>;
+    timestamp: number;
+}
     timestamp: number;
 }
 
@@ -354,21 +356,21 @@ export interface AttackEvent {
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 /** 只读属性 */
-export type Readonly = {
+/** 只读属性 */
+export type ReadonlyObj<T> = {
     readonly [K in keyof T]: T[K];
 };
-
 /** 深度只读 */
-export type DeepReadonly = {
-    readonly [K in keyof T]: T[K] extends object ? DeepReadonly : T[K];
+/** 深度只读 */
+export type DeepReadonly<T> = {
+    readonly [K in keyof T]: T[K] extends object ? DeepReadonly<T[K]> : T[K];
 };
-
 /** 记录类型 */
-export type RecordType = Record;
-
+/** 记录类型 */
+export type RecordType<K extends string | number | symbol, V> = Record<K, V>;
 /** 数组工具类型 */
-export type ArrayElement = T extends (infer U)[] ? U : never;
-
+/** 数组工具类型 */
+export type ArrayElement<T> = T extends (infer U)[] ? U : never;
 // ==================== 常量类型 ====================
 
 /** 标准网格尺寸 */
