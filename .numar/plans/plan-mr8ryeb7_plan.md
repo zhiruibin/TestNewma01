@@ -167,8 +167,8 @@ updated: 2026-07-06
 - [✔] 移除 ParticleSystem.emitScreenFlash() 方法
 - [✔] 合并 Grid.reset() 和 Grid.clear() 为单一方法
 - [✔] 修复 types/index.ts 泛型语法错误（Readonly、DeepReadonly、RecordType、ArrayElement、GameEvent.payload）
-- [ ] 修复 GameBoard.tsx 中 useGameStore selector 的 any 类型断言
-- [ ] 统一计分系统：让 gameStore 使用 ScoreSystem 类，移除 LineClear.calculateScore() 中的重复逻辑
+- [✔] 修复 GameBoard.tsx 中 useGameStore selector 的 any 类型断言
+- [✔] 统一计分系统：让 gameStore 使用 ScoreSystem 类，移除 LineClear.calculateScore() 中的重复逻辑
 - [ ] 统一音频系统：确认 App.tsx 只用 audioStore，删除 AudioManager 引用
 - [ ] 修复 Grid.ts 中错位的注释
 - [ ] 修复 useKeyboardNavigation.ts 缺失的返回类型定义

@@ -238,7 +238,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const scoreSystem = new Score();
     const levelSystem = new Level();
     const holdSystem = new Hold();
-    const lineClearSystem = new LineClear(gridSystem);
+    const lineClearSystem = new LineClear(gridSystem, scoreSystem);
 
     // Apply current difficulty speed multiplier
     const { difficulty } = get();
@@ -459,14 +459,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const lineClearResult = lineClearSystem.checkAndClear();
 
     if (lineClearResult && lineClearResult.linesCleared > 0) {
-      const { combo, level, gameStats, b2b } = get();
-      const points = lineClearResult.score * level;
+      const { scoreSystem, level } = get();
+      const prevScore = scoreSystem?.getScore() ?? 0;
+      scoreSystem?.addLineClear(lineClearResult.linesCleared, lineClearResult.tSpin, lineClearResult.isMini, lineClearResult.backToBack);
+      scoreSystem?.addCombo(lineClearResult.combo);
+      const points = (scoreSystem?.getScore() ?? 0) - prevScore;
 
       get().addScore(points);
       get().addLines(lineClearResult.linesCleared);
       get().incrementCombo();
       get().setB2B(lineClearResult.backToBack);
-
       // Track statistics
       const newStats = { ...gameStats };
       if (lineClearResult.linesCleared === 4) {

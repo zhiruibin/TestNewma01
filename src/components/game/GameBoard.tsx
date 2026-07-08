@@ -32,15 +32,15 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
   const particleContainerRef = useRef<PIXI.Container | null>(null);
   const particleSystemRef = useRef<ParticleSystem | null>(null);
 
-  const grid = useGameStore((state: any) => state.grid as Cell[][]);
-  const currentBlock = useGameStore((state: any) => state.currentPiece as Tetromino | null);
-  const ghostBlock = useGameStore((state: any) => state.ghostPiece as Tetromino | null);
-  const gameState = useGameStore((state: any) => state.status as 'idle' | 'playing' | 'paused' | 'gameover');
-  const clearEffects = useGameStore((state: any) => state.clearEffects);
-  const consumeEffects = useGameStore((state: any) => state.consumeEffects);
-  const clearAnimationRows = useGameStore((state: any) => state.clearAnimationRows as number[]);
-  const clearAnimationActive = useGameStore((state: any) => state.clearAnimationActive as boolean);
-  const readyGoPhase = useGameStore((state: any) => state.readyGoPhase as 'ready' | 'go' | null);
+  const grid = useGameStore((state) => state.grid);
+  const currentBlock = useGameStore((state) => state.currentPiece);
+  const ghostBlock = useGameStore((state) => state.ghostPiece);
+  const gameState = useGameStore((state) => state.status);
+  const clearEffects = useGameStore((state) => state.clearEffects);
+  const consumeEffects = useGameStore((state) => state.consumeEffects);
+  const clearAnimationRows = useGameStore((state) => state.clearAnimationRows);
+  const clearAnimationActive = useGameStore((state) => state.clearAnimationActive);
+  const readyGoPhase = useGameStore((state) => state.readyGoPhase);
   const clearLabel = useGameStore((state) => state.clearLabel);
 
   const [isInitialized, setIsInitialized] = useState(false);

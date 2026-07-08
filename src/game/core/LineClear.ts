@@ -2,20 +2,19 @@
 import { Grid } from './Grid';
 import { Block } from './Block';
 import { TetrominoType } from '../../types';
-
+import { ScoreSystem } from './Score';
 // LineClear 类，负责处理游戏行消除逻辑
 /*** 消除行信息
  */
 export interface ClearLineInfo {
   rowIndex: number;
   isTSpin: boolean;
-  // 构造函数，初始化行消除器实例
   isMini: boolean;
 }
 
-/*** 消除结果
- */
-// 检查并消除已满的行
+ /*** 消除结果
+  */
+export interface ClearResult {
 export interface ClearResult {
   linesCleared: number;
   score: number;
@@ -26,7 +25,7 @@ export interface ClearResult {
   clearedRows: number[];
 }
 
-// 计算消除行数对应的得分
+/*** 消除特效数据
 /*** 消除特效数据
  */
 export interface ClearEffect {
@@ -43,14 +42,15 @@ export interface ClearEffect {
  */
 export class LineClear {
   private grid: Grid;
+  private scoreSystem?: ScoreSystem;
   private combo: number = 0;
   private backToBack: boolean = false;
   private lastClearWasDifficult: boolean = false;
   private pendingEffects: ClearEffect[] = [];
 
-  // 通知游戏状态更新
-  constructor(grid: Grid) {
+  constructor(grid: Grid, scoreSystem?: ScoreSystem) {
     this.grid = grid;
+    this.scoreSystem = scoreSystem;
   }
 
   /*** 检测并消除完整行
@@ -89,8 +89,39 @@ export class LineClear {
     // 执行消除
     this.clearRows(completeRows);
 
-    // 计算分数
-    const score = this.calculateScore(linesCleared, isTSpin, isMini);
+    // 计算分数：优先使用 ScoreSystem，否则回退到内联计算
+    let score: number;
+    if (this.scoreSystem) {
+      score = this.scoreSystem.addLineClear(linesCleared, isTSpin, isMini, this.backToBack)
+           + this.scoreSystem.addCombo(this.combo);
+    } else {
+      // 向后兼容的内联计算
+      let baseScore = 0;
+      switch (linesCleared) {
+        case 1: baseScore = 100; break;
+        case 2: baseScore = 300; break;
+        case 3: baseScore = 500; break;
+        case 4: baseScore = 800; break;
+      }
+      if (isTSpin) {
+        switch (linesCleared) {
+          case 0: baseScore = 400; break;
+          case 1: baseScore = 800; break;
+          case 2: baseScore = 1200; break;
+          case 3: baseScore = 1600; break;
+        }
+        if (isMini) {
+          baseScore = Math.floor(baseScore / 2);
+        }
+      }
+      if (this.backToBack && (linesCleared === 4 || isTSpin)) {
+        baseScore = Math.floor(baseScore * 1.5);
+      }
+      if (this.combo > 0) {
+        baseScore += 50 * this.combo;
+      }
+      score = baseScore;
+    }
 
     // 添加特效
     this.addEffects(linesCleared, isTSpin, isMini, completeRows);
@@ -102,13 +133,11 @@ export class LineClear {
       isMini,
       combo: this.combo,
       backToBack: this.backToBack,
-      clearedRows: completeRows,
     };
+
   }
 
   /*** 查找所有完整的行
-   * @returns 完整行的索引数组
-   */
 public findCompleteRows(): number[] {
     const completeRows: number[] = [];
     const height = this.grid.getHeight();
@@ -157,7 +186,6 @@ public findCompleteRows(): number[] {
     const corners = this.getTCorners(position);
     const filledCorners = corners.filter((corner) => this.isCornerFilled(corner));
 
-    // 标准 T-Spin: 至少 3 个角被填充
     // 标准 T-Spin: 至少 3 个角被填充
     const isTSpin = filledCorners.length >= 3;
 
@@ -219,66 +247,6 @@ public findCompleteRows(): number[] {
     return miniPatterns.some((pattern) => pattern.every((val, i) => val === cornerPattern[i]));
   }
 
-  /*** 计算消除分数
-   * @param lines 消除行数
-   * @param isTSpin 是否 T-Spin
-   * @param isMini 是否 Mini T-Spin
-   * @returns 分数
-   */
-  private calculateScore(lines: number, isTSpin: boolean, isMini: boolean): number {
-    let baseScore = 0;
-
-    // 基础消除分数
-    switch (lines) {
-      case 1:
-        baseScore = 100;
-        break;
-      case 2:
-        baseScore = 300;
-        break;
-      case 3:
-        baseScore = 500;
-        break;
-      case 4:
-        baseScore = 800;
-        break;
-    }
-
-    // T-Spin 分数
-    if (isTSpin) {
-      switch (lines) {
-        case 0:
-          baseScore = 400;
-          break;
-        case 1:
-          baseScore = 800;
-          break;
-        case 2:
-          baseScore = 1200;
-          break;
-        case 3:
-          baseScore = 1600;
-          break;
-      }
-
-      // Mini T-Spin 分数减半
-      if (isMini) {
-        baseScore = Math.floor(baseScore / 2);
-      }
-    }
-
-    // Back-to-Back 加成
-    if (this.backToBack && (lines === 4 || isTSpin)) {
-      baseScore = Math.floor(baseScore * 1.5);
-    }
-
-    // Combo 加成
-    if (this.combo > 0) {
-      baseScore += 50 * this.combo;
-    }
-
-    return baseScore;
-  }
 
   /**
    * 添加消除特效
