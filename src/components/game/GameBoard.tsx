@@ -159,30 +159,6 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
       }
     }
 
-    // 消行闪白效果：渐变淡出动画，400ms 内 alpha 从 0.6 线性降到 0
-    if (clearAnimationActive && clearAnimationRows.length > 0) {
-      const flashGraphics = new PIXI.Graphics();
-      flashGraphics.beginFill(0xffffff, 0.6);
-      for (const row of clearAnimationRows) {
-        flashGraphics.drawRect(0, row * CELL_SIZE, BOARD_WIDTH, CELL_SIZE);
-      }
-      flashGraphics.endFill();
-      gridContainerRef.current.addChild(flashGraphics);
-
-      const duration = 400;
-      const startTime = performance.now();
-      const fadeFlash = (now: number) => {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        flashGraphics.alpha = 0.6 * (1 - progress);
-        if (progress < 1) {
-          requestAnimationFrame(fadeFlash);
-        } else {
-          gridContainerRef.current?.removeChild(flashGraphics);
-          flashGraphics.destroy();
-        }
-      };
-      requestAnimationFrame(fadeFlash);
     }
   }, [grid, clearAnimationActive, clearAnimationRows]);
 

@@ -11,7 +11,7 @@ const BOARD_HEIGHT = 20;
 const LOCK_DELAY_MS = 500;
 const MAX_LOCK_DELAY_RESETS = 15;
 const NEXT_QUEUE_SIZE = 5;
-const CLEAR_ANIMATION_MS = 400;
+const CLEAR_ANIMATION_MS = 250;
 
 // SRS Wall Kick offset tables
 // Keys: 'fromRotation>toRotation', values: 5 [dx, dy] pairs (SRS convention: dy positive = up)
