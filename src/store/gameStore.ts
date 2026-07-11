@@ -441,7 +441,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lockPiece: () => {
     get().clearLockDelay();
     set({ lockDelayResets: 0 });
-    const { currentPiece, nextPieces, gridSystem, lineClearSystem, status, clearAnimationActive } = get();
+    const { currentPiece, nextPieces, gridSystem, lineClearSystem, status, clearAnimationActive, gameStats, combo } = get();
     if (!currentPiece || !gridSystem || nextPieces.length === 0 || !lineClearSystem) {
       return;
     }
@@ -453,28 +453,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     gridSystem.lockPiece(currentPiece);
 
-    const boardData = gridSystem.getCells();
-    const pendingRows = lineClearSystem.findCompleteRows();
-    const clearedCellTypes = pendingRows.map(row => boardData[row].map(cell => cell?.type ?? null));
-    const lineClearResult = lineClearSystem.checkAndClear();
+    // Use detectAndScore: detects full rows, computes score, collects effects — does NOT clear rows yet
+    const result = lineClearSystem.detectAndScore(currentPiece);
 
-    if (lineClearResult && lineClearResult.linesCleared > 0) {
-      const { scoreSystem, level } = get();
-      const prevScore = scoreSystem?.getScore() ?? 0;
-      scoreSystem?.addLineClear(lineClearResult.linesCleared, lineClearResult.tSpin, lineClearResult.isMini, lineClearResult.backToBack);
-      scoreSystem?.addCombo(lineClearResult.combo);
-      const points = (scoreSystem?.getScore() ?? 0) - prevScore;
+    if (result && result.linesCleared > 0) {
+      const { level } = get();
+      const boardData = gridSystem.getCells();
+      const clearedCellTypes = result.rows.map(row => boardData[row].map(cell => cell?.type ?? null));
 
-      get().addScore(points);
-      get().addLines(lineClearResult.linesCleared);
+      // Apply score directly from detectAndScore (no duplicate scoreSystem calls)
+      get().addScore(result.score);
+      get().addLines(result.linesCleared);
       get().incrementCombo();
-      get().setB2B(lineClearResult.backToBack);
+      get().setB2B(result.backToBack);
+
       // Track statistics
       const newStats = { ...gameStats };
-      if (lineClearResult.linesCleared === 4) {
+      if (result.linesCleared === 4) {
         newStats.tetrisCount++;
       }
-      if (lineClearResult.tSpin) {
+      if (result.isTSpin) {
         newStats.tSpinCount++;
       }
       const currentCombo = combo + 1;
@@ -483,32 +481,33 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
       set({ gameStats: newStats });
 
+      // Set clear effects with cell types for particle animation
       const effects = lineClearSystem.getPendingEffects();
       if (effects.length > 0) {
-        set({ clearEffects: effects.map(e => ({ ...e, cellTypes: clearedCellTypes, isBackToBack: lineClearResult.backToBack, combo: lineClearResult.combo })) });
+        set({ clearEffects: effects.map(e => ({ ...e, cellTypes: clearedCellTypes, isBackToBack: result.backToBack, combo: result.combo })) });
       }
 
-      get().levelSystem?.addLinesCleared(lineClearResult.linesCleared);
+      get().levelSystem?.addLinesCleared(result.linesCleared);
       const newLevel = get().levelSystem?.getLevel();
       if (newLevel !== undefined && newLevel > level) {
         set({ level: newLevel });
       }
 
-      // Build clearLabel from lineClearResult
+      // Build clearLabel from result
       const labelParts: string[] = [];
-      if (lineClearResult.tSpin) {
+      if (result.isTSpin) {
         labelParts.push('T-Spin');
       }
-      if (lineClearResult.linesCleared === 4) {
+      if (result.linesCleared === 4) {
         labelParts.push('Tetris!');
-      } else if (lineClearResult.linesCleared === 3) {
+      } else if (result.linesCleared === 3) {
         labelParts.push('Triple');
-      } else if (lineClearResult.linesCleared === 2) {
+      } else if (result.linesCleared === 2) {
         labelParts.push('Double');
-      } else if (lineClearResult.linesCleared === 1 && !lineClearResult.tSpin) {
+      } else if (result.linesCleared === 1 && !result.isTSpin) {
         labelParts.push('Single');
       }
-      if (lineClearResult.backToBack) {
+      if (result.backToBack) {
         labelParts.push('B2B');
       }
       if (currentCombo > 0) {
@@ -516,10 +515,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
       const clearLabel = labelParts.join(' · ');
 
-      // Set clear animation state, delay actual row removal
+      // Set clear animation state — rows are still physically present on the grid
       set({
         clearAnimationActive: true,
-        clearAnimationRows: pendingRows,
+        clearAnimationRows: result.rows,
         clearLabel,
       });
 
@@ -530,55 +529,88 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       }, 1500);
 
+      // Delayed: actually clear the rows after animation plays
       setTimeout(() => {
         const { gridSystem: gs } = get();
         if (gs) {
+          gs.clearLines(result.rows);
           set({
             grid: gs.getCells(),
             clearAnimationActive: false,
             clearAnimationRows: [],
           });
+
+          // Spawn next piece after line clear animation
+          const { nextPieces, gridSystem: latestGS } = get();
+          if (nextPieces.length === 0 || !latestGS) return;
+
+          const nextPiece = nextPieces[0];
+          const remainingNext = nextPieces.slice(1);
+
+          const testPiece: Tetromino = {
+            ...nextPiece,
+            y: 0,
+          };
+          if (latestGS.checkCollision(testPiece)) {
+            get().gameOver();
+            return;
+          }
+
+          const newBlock = Block.createRandom();
+          const newNextPiece = createTetrominoFromBlock(newBlock);
+          const updatedNextPieces = [...remainingNext, newNextPiece];
+
+          const newCurrentPiece: Tetromino = {
+            ...nextPiece,
+            x: Math.floor((BOARD_WIDTH - Math.max(...nextPiece.shape.map(row => row.length))) / 2),
+            y: 0,
+          };
+
+          set({
+            currentPiece: newCurrentPiece,
+            nextPieces: updatedNextPieces,
+            canHold: true,
+          });
+
+          get().updateGhost();
         }
       }, CLEAR_ANIMATION_MS);
     } else {
       get().resetCombo();
+
+      // No lines cleared — spawn next piece immediately
+      const nextPiece = nextPieces[0];
+      const remainingNext = nextPieces.slice(1);
+
+      const testPiece: Tetromino = {
+        ...nextPiece,
+        y: 0,
+      };
+      if (gridSystem.checkCollision(testPiece)) {
+        get().gameOver();
+        return;
+      }
+
+      const newBlock = Block.createRandom();
+      const newNextPiece = createTetrominoFromBlock(newBlock);
+      const updatedNextPieces = [...remainingNext, newNextPiece];
+
+      const newCurrentPiece: Tetromino = {
+        ...nextPiece,
+        x: Math.floor((BOARD_WIDTH - Math.max(...nextPiece.shape.map(row => row.length))) / 2),
+        y: 0,
+      };
+
+      set({
+        currentPiece: newCurrentPiece,
+        nextPieces: updatedNextPieces,
+        grid: gridSystem.getCells(),
+        canHold: true,
+      });
+
+      get().updateGhost();
     }
-
-    // Advance next queue: take from front, append new piece at end
-    const nextPiece = nextPieces[0];
-    const remainingNext = nextPieces.slice(1);
-
-    // Check game over: can the next piece spawn?
-    const testPiece: Tetromino = {
-      ...nextPiece,
-      y: 0,
-    };
-    if (gridSystem.checkCollision(testPiece)) {
-      get().gameOver();
-      return;
-    }
-
-    // Generate new piece to append to queue
-    const newBlock = Block.createRandom();
-    const newNextPiece = createTetrominoFromBlock(newBlock);
-    const updatedNextPieces = [...remainingNext, newNextPiece];
-
-    const newCurrentPiece: Tetromino = {
-      ...nextPiece,
-      x: Math.floor((BOARD_WIDTH - Math.max(...nextPiece.shape.map(row => row.length))) / 2),
-      y: 0,
-    };
-
-    set({
-      currentPiece: newCurrentPiece,
-      nextPieces: updatedNextPieces,
-      grid: gridSystem.getCells(),
-      canHold: true,
-    });
-
-    get().updateGhost();
   },
-
 
   getGhostY: (currentPiece: Tetromino, gridSystem: Grid): number => {
     let ghostY = currentPiece.y;
@@ -634,14 +666,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   moveDown: () => {
-    const { currentPiece, gridSystem, gameStats } = get();
+    const { currentPiece, gridSystem, gameStats, clearAnimationActive } = get();
     if (!currentPiece || !gridSystem) {
+      return false;
+    }
+    if (clearAnimationActive) {
       return false;
     }
 
     const testPiece: Tetromino = {
       ...currentPiece,
       y: currentPiece.y + 1,
+      wasLastMoveRotation: false,
     };
 
     if (gridSystem.checkCollision(testPiece)) {
@@ -666,6 +702,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const testPiece: Tetromino = {
       ...currentPiece,
       x: currentPiece.x - 1,
+      wasLastMoveRotation: false,
     };
 
     if (gridSystem.checkCollision(testPiece)) {
@@ -694,6 +731,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const testPiece: Tetromino = {
       ...currentPiece,
       x: currentPiece.x + 1,
+      wasLastMoveRotation: false,
     };
 
     if (gridSystem.checkCollision(testPiece)) {
@@ -744,6 +782,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           rotation: newRotation,
           x: currentPiece.x + dx,
           y: currentPiece.y - dy, // SRS y-axis: positive dy = up, screen y = down
+          wasLastMoveRotation: true,
         };
         if (!gridSystem.checkCollision(testPiece)) {
           set({
@@ -790,7 +829,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Move piece to ghost position in a single set
     set({
-      currentPiece: { ...currentPiece, y: ghostY },
+      currentPiece: { ...currentPiece, y: ghostY, wasLastMoveRotation: false },
       ghostPiece: { ...currentPiece, y: ghostY },
     });
 
@@ -879,7 +918,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   startLockDelay: () => {
-    const { lockDelayTimer } = get();
+    const { lockDelayTimer, clearAnimationActive } = get();
+    if (clearAnimationActive) {
+      return;
+    }
     if (lockDelayTimer) {
       return;
     }

@@ -48,6 +48,8 @@ export interface Tetromino {
     rotation: number;
     x: number;
     y: number;
+    /** 上一次操作是否为旋转，用于 T-Spin 检测 */
+    wasLastMoveRotation?: boolean;
 }
 
 /** 下一个方块 */

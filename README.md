@@ -25,6 +25,8 @@
 
 | 技术 | 版本 | 说明 |
 |------|------|------|
+| 技术 | 版本 | 说明 |
+|------|------|------|
 | React | 18.x | 前端框架 |
 | TypeScript | 5.x | 类型安全 |
 | Pixi.js | 7.x | 2D 渲染引擎 |
@@ -32,9 +34,8 @@
 | Vite | 4.x | 构建工具 |
 | Zustand | 4.x | 状态管理 |
 | Howler.js | 2.x | 音频引擎 |
+| Vitest | 0.34.x | 单元测试框架 |
 | CSS3 | - | 样式设计 |
-
-## 📦 安装指南
 
 ### 环境要求
 
@@ -93,17 +94,29 @@ src/
 ├── components/
 │   ├── game/                      # 游戏组件
 │   │   ├── GameBoard.tsx          # 游戏主画板（Pixi.js 渲染）
+│   │   ├── GameBoard.css          # 游戏画板样式
 │   │   ├── HoldBlock.tsx          # 暂存方块显示
 │   │   ├── NextBlock.tsx          # 下一个方块预览
-│   │   └── ScoreBoard.tsx         # 分数面板
+│   │   ├── ScoreBoard.tsx         # 分数面板
+│   │   └── ScoreBoard.css         # 分数面板样式
 │   └── ui/                        # UI 组件
 │       ├── GameOver.tsx           # 游戏结束弹窗
 │       ├── MainMenu.tsx           # 主菜单页面
+│       ├── MainMenu.css           # 主菜单样式
 │       ├── PauseMenu.tsx          # 暂停菜单
+│       ├── PauseMenu.css          # 暂停菜单样式
 │       ├── ScoreHistory.tsx       # 积分历史
-│       └── Settings.tsx           # 设置页面
+│       ├── ScoreHistory.css       # 积分历史样式
+│       ├── Settings.tsx           # 设置页面
+│       └── Settings.css           # 设置页面样式
 ├── game/
 │   └── core/                      # 游戏核心逻辑
+│       ├── __tests__/             # 单元测试
+│       │   ├── Block.test.ts      # 方块逻辑测试
+│       │   ├── Grid.test.ts       # 网格系统测试
+│       │   ├── Level.test.ts      # 等级系统测试
+│       │   ├── LineClear.test.ts  # 行消除逻辑测试
+│       │   └── Score.test.ts      # 计分系统测试
 │       ├── Block.ts               # 方块逻辑类
 │       ├── Collision.ts           # 碰撞检测
 │       ├── Ghost.ts               # 幽灵方块计算
@@ -121,7 +134,7 @@ src/
 │   ├── main.ts                    # 主进程入口
 │   └── preload.ts                 # 预加载脚本
 ├── renderer/                      # 渲染进程
-│   └── index.ts                   # 渲染进程入口
+│   └── index.tsx                  # 渲染进程入口
 ├── store/                         # 状态管理
 │   ├── audioStore.ts              # 音频状态
 │   ├── gameStore.ts               # 游戏状态
@@ -195,6 +208,8 @@ gameStore state 更新 (grid / currentBlock / score / ...)
   │
   ├──▶ GameBoard useEffect 订阅 → Pixi 重绘游戏画面
   │
+  └──▶ React UI 组件 (ScoreBoard / HoldBlock / NextBlock) 重渲染
+```
   └──▶ React UI 组件 (ScoreBoard / HoldBlock / NextBlock) 重渲染
 
 ## 🔧 开发说明
@@ -313,6 +328,8 @@ useParticleBackground(canvasRef, {
 - **`npm run lint`** — ESLint 检查 `src` 目录下的 `.ts` / `.tsx` 文件，输出代码风格与潜在问题
 - **`npm run lint:fix`** — ESLint 自动修复可安全修复的问题（如格式化、简单规则违规）
 - **`npm run type-check`** — TypeScript 类型检查（`tsc --noEmit`），不生成文件仅校验类型正确性
+- **`npm run test`** — 运行 Vitest 单元测试
+- **`npm run test:coverage`** — 运行测试并生成覆盖率报告
 
 ## 🐛 已知问题
 
@@ -320,6 +337,13 @@ useParticleBackground(canvasRef, {
 - 移动端触摸控制尚未实现
 
 ## 📝 更新日志
+
+### v1.2.0
+- 新增 Vitest 单元测试框架
+- 新增 5 个核心模块单元测试（Block / Grid / Level / LineClear / Score）
+- 修复消行特效 Lightning 不显示的 bug
+- 修复消行特效 Combo 数字失效的 bug
+- 清理 coverage 目录并加入 .gitignore
 
 ### v1.1.0
 - 新增粒子动画背景（主菜单 + 设置页面）

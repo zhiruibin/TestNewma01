@@ -1,5 +1,5 @@
 // 游戏主面板组件，负责使用 Pixi.js 渲染游戏区域
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
 import { useGameStore } from '../../store/gameStore';
 import { Tetromino, TetrominoType, Cell } from '../../types';
@@ -44,6 +44,7 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
   const clearLabel = useGameStore((state) => state.clearLabel);
 
   const [isInitialized, setIsInitialized] = useState(false);
+  const isReadyGoActive = readyGoPhase === 'ready' || readyGoPhase === 'go';
   const [showClearLabel, setShowClearLabel] = useState(false);
   const [clearLabelText, setClearLabelText] = useState('');
   const [shakeActive, setShakeActive] = useState(false);
@@ -130,6 +131,7 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      setIsInitialized(false);
       app.destroy(true, { children: true });
       appRef.current = null;
     };
@@ -156,7 +158,33 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
         }
       }
     }
-  }, [grid]);
+
+    // 消行闪白效果：渐变淡出动画，400ms 内 alpha 从 0.6 线性降到 0
+    if (clearAnimationActive && clearAnimationRows.length > 0) {
+      const flashGraphics = new PIXI.Graphics();
+      flashGraphics.beginFill(0xffffff, 0.6);
+      for (const row of clearAnimationRows) {
+        flashGraphics.drawRect(0, row * CELL_SIZE, BOARD_WIDTH, CELL_SIZE);
+      }
+      flashGraphics.endFill();
+      gridContainerRef.current.addChild(flashGraphics);
+
+      const duration = 400;
+      const startTime = performance.now();
+      const fadeFlash = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        flashGraphics.alpha = 0.6 * (1 - progress);
+        if (progress < 1) {
+          requestAnimationFrame(fadeFlash);
+        } else {
+          gridContainerRef.current?.removeChild(flashGraphics);
+          flashGraphics.destroy();
+        }
+      };
+      requestAnimationFrame(fadeFlash);
+    }
+  }, [grid, clearAnimationActive, clearAnimationRows]);
 
   // Render ghost block
   useEffect(() => {
@@ -225,47 +253,68 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
   useEffect(() => {
     if (clearEffects.length === 0 || !particleSystemRef.current) return;
     for (const effect of clearEffects) {
-      for (let i = 0; i < effect.rows.length; i++) {
-        const row = effect.rows[i];
-        const cellTypes = effect.cellTypes[i];
-        if (!cellTypes) continue;
-        for (let col = 0; col < cellTypes.length; col++) {
-          const type = cellTypes[col] as TetrominoType | null;
-          if (type && BLOCK_COLORS[type] !== undefined) {
-            particleSystemRef.current.emit(row, col, BLOCK_COLORS[type], effect.intensity);
+      try {
+        // Emit base particles for cleared cells
+        try {
+          for (let i = 0; i < effect.rows.length; i++) {
+            const row = effect.rows[i];
+            const cellTypes = effect.cellTypes[i];
+            if (!cellTypes) continue;
+            for (let col = 0; col < cellTypes.length; col++) {
+              const type = cellTypes[col] as TetrominoType | null;
+              if (type && BLOCK_COLORS[type] !== undefined) {
+                particleSystemRef.current.emit(row, col, BLOCK_COLORS[type], effect.intensity);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[GameBoard] emit particles failed:', e);
+        }
+
+        // Extended particle effects based on clear type
+        const isTetris = effect.rows.length >= 4;
+        const isB2B = effect.isBackToBack;
+        const combo = effect.combo || 0;
+
+        // Tetris: full-screen flash particles
+        if (isTetris && particleSystemRef.current) {
+          try {
+            for (const row of effect.rows) {
+              particleSystemRef.current.emitFlash(row, 0xffffff, 30);
+            }
+          } catch (e) {
+            console.warn('[GameBoard] emitFlash failed:', e);
           }
         }
-      }
 
-      // Extended particle effects based on clear type
-      const isTetris = effect.rows.length >= 4;
-      const isB2B = effect.isBackToBack;
-      const combo = effect.combo || 0;
-
-      // Tetris: full-screen flash particles
-      if (isTetris && particleSystemRef.current) {
-        for (const row of effect.rows) {
-          particleSystemRef.current.emitFlash(row, 0xffffff, 30);
+        // B2B: lightning particles
+        if (isB2B && particleSystemRef.current) {
+          try {
+            const minRow = Math.min(...effect.rows);
+            const maxRow = Math.max(...effect.rows);
+            particleSystemRef.current.emitLightning(minRow, maxRow, 0xffff00, effect.intensity);
+          } catch (e) {
+            console.warn('[GameBoard] emitLightning failed:', e);
+          }
         }
-      }
 
-      // B2B: lightning particles
-      if (isB2B && particleSystemRef.current) {
-        const minRow = Math.min(...effect.rows);
-        const maxRow = Math.max(...effect.rows);
-        particleSystemRef.current.emitLightning(minRow, maxRow, 0xffff00, effect.intensity);
-      }
-
-      // Combo: number fly-out particles
-      if (combo > 1 && particleSystemRef.current) {
-        const midRow = effect.rows[Math.floor(effect.rows.length / 2)];
-        const x = (GRID_WIDTH / 2) * CELL_SIZE;
-        const y = midRow * CELL_SIZE;
-        particleSystemRef.current.emitComboText(combo, x, y, 0x00ffff);
+        // Combo: number fly-out particles
+        if (combo > 1 && particleSystemRef.current) {
+          try {
+            const midRow = effect.rows[Math.floor(effect.rows.length / 2)];
+            const x = (GRID_WIDTH / 2) * CELL_SIZE;
+            const y = midRow * CELL_SIZE;
+            particleSystemRef.current.emitComboText(combo, x, y, 0x00ffff);
+          } catch (e) {
+            console.warn('[GameBoard] emitComboText failed:', e);
+          }
+        }
+      } catch (e) {
+        console.warn('[GameBoard] effect processing failed:', e);
       }
     }
     consumeEffects();
-  }, [clearEffects]);
+  }, [clearEffects, consumeEffects]);
 
   const getOverlayMessage = () => {
     if (gameState === 'idle') return '按回车键开始游戏';
@@ -279,9 +328,6 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
     if (readyGoPhase === 'go') return 'GO!';
     return '';
   };
-
-  const isReadyGoActive = readyGoPhase === 'ready' || readyGoPhase === 'go';
-
   return (
     <div ref={ref} className={`game-board-container${shakeActive ? ' screen-shake' : ''}`}>
       <div ref={containerRef} className="pixi-container" />

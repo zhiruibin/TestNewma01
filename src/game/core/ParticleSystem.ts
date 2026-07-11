@@ -107,10 +107,55 @@ export class ParticleSystem {
     }
   }
 
+  emitLightning(minRow: number, maxRow: number, color: number = 0xffff00, intensity: number = 1.0): void {
+    const boltCount = Math.round(3 + 2 * intensity);
+    const minY = minRow * this.cellSize;
+    const maxY = (maxRow + 1) * this.cellSize;
+    const spanY = maxY - minY;
+
+    for (let b = 0; b < boltCount; b++) {
+      const baseX = Math.random() * this.boardWidth;
+      const segmentCount = Math.round(spanY / (8 + Math.random() * 6));
+      const segHeight = spanY / segmentCount;
+
+      for (let s = 0; s < segmentCount; s++) {
+        const width = 2 + Math.random() * 3;
+        const height = segHeight * (0.8 + Math.random() * 0.4);
+        const maxLife = 0.15 + Math.random() * 0.15;
+
+        const graphics = new PIXI.Graphics();
+        graphics.beginFill(0xffffff);
+        graphics.drawRect(0, 0, width, height);
+        graphics.endFill();
+        graphics.tint = color;
+        graphics.alpha = 0.7 + Math.random() * 0.3;
+        this.container.addChild(graphics);
+
+        const xOffset = (Math.random() - 0.5) * 12;
+        const particle: Particle = {
+          x: baseX + xOffset,
+          y: minY + s * segHeight,
+          vx: (Math.random() - 0.5) * 40,
+          vy: 300 + Math.random() * 500,
+          life: maxLife,
+          maxLife,
+          alpha: 1,
+          size: height,
+          color,
+          rotation: 0,
+          rotationSpeed: (Math.random() - 0.5) * 4,
+          graphics,
+          isLarge: true,
+        };
+
+        this.particles.push(particle);
+      }
+    }
+  }
 
   emitComboText(combo: number, x: number, y: number, color: number = 0xffdd00): void {
-    const text = `${combo} COMBO`;
     const maxLife = 1.2;
+    const text = `${combo} Combo!`;
 
     const style = new PIXI.TextStyle({
       fontFamily: 'Arial, sans-serif',
