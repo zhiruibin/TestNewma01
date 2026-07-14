@@ -25,16 +25,14 @@
 
 | 技术 | 版本 | 说明 |
 |------|------|------|
-| 技术 | 版本 | 说明 |
-|------|------|------|
-| React | 18.x | 前端框架 |
-| TypeScript | 5.x | 类型安全 |
-| Pixi.js | 7.x | 2D 渲染引擎 |
-| Electron | 28.x | 桌面应用框架 |
-| Vite | 4.x | 构建工具 |
-| Zustand | 4.x | 状态管理 |
-| Howler.js | 2.x | 音频引擎 |
-| Vitest | 0.34.x | 单元测试框架 |
+| React | 18.2.0 | 前端框架 |
+| TypeScript | 5.1.6 | 类型安全 |
+| Pixi.js | 7.3.3 | 2D 渲染引擎 |
+| Electron | 28.0.0 | 桌面应用框架 |
+| Vite | 4.4.9 | 构建工具 |
+| Zustand | 4.4.1 | 状态管理 |
+| Howler.js | 2.2.3 | 音频引擎 |
+| Vitest | 0.34.6 | 单元测试框架 |
 | CSS3 | - | 样式设计 |
 
 ### 环境要求
@@ -108,7 +106,8 @@ src/
 │       ├── ScoreHistory.tsx       # 积分历史
 │       ├── ScoreHistory.css       # 积分历史样式
 │       ├── Settings.tsx           # 设置页面
-│       └── Settings.css           # 设置页面样式
+│       ├── Settings.css           # 设置页面样式
+│       └── useKeyboardNavigation.ts # 键盘导航 Hook
 ├── game/
 │   └── core/                      # 游戏核心逻辑
 │       ├── __tests__/             # 单元测试
@@ -128,7 +127,6 @@ src/
 │       ├── ParticleSystem.ts      # 粒子系统
 │       └── Score.ts               # 计分系统
 ├── hooks/                         # 自定义 Hooks
-│   ├── useKeyboardNavigation.ts   # 键盘导航 Hook
 │   └── useParticleBackground.ts   # 粒子动画背景 Hook
 ├── main/                          # Electron 主进程
 │   ├── main.ts                    # 主进程入口
@@ -210,7 +208,6 @@ gameStore state 更新 (grid / currentBlock / score / ...)
   │
   └──▶ React UI 组件 (ScoreBoard / HoldBlock / NextBlock) 重渲染
 ```
-  └──▶ React UI 组件 (ScoreBoard / HoldBlock / NextBlock) 重渲染
 
 ## 🔧 开发说明
 
@@ -337,6 +334,11 @@ useParticleBackground(canvasRef, {
 - 移动端触摸控制尚未实现
 
 ## 📝 更新日志
+
+### v1.2.1
+- 修复 `lockPiece` 闭合括号缺失导致的编译错误
+- 修复消行后游戏冻结的问题
+- 修复 `GameBoard` useEffect 冗余括号
 
 ### v1.2.0
 - 新增 Vitest 单元测试框架
