@@ -159,7 +159,6 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
       }
     }
 
-    }
   }, [grid, clearAnimationActive, clearAnimationRows]);
 
   // Render ghost block
