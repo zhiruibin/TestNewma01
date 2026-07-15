@@ -158,6 +158,52 @@ src/
 3. **Lock Delay**：方块触底后不会立即锁定，而是启动 500ms 延迟窗口，允许玩家在此期间继续移动/旋转方块；每次有效移动重置延迟计时器，最多重置 15 次
 4. **暂停/恢复**：通过 `gameStatus` 状态控制循环的启停，暂停时取消 `requestAnimationFrame`
 
+### 核心流程图
+
+#### 游戏主流程
+
+```mermaid
+flowchart TD
+    A[开始游戏 startGame] --> B[生成方块 spawnPiece]
+    B --> C[游戏循环 gameLoop]
+    C --> D[自动下落 moveDown]
+    D --> E{能继续下落?}
+    E -->|是| F[玩家操作: 移动/旋转/硬降/暂存]
+    F --> C
+    E -->|否| G[锁定方块 lockPiece]
+    G --> H[写入网格]
+    H --> I{有满行?}
+    I -->|否| B
+    I -->|是| J[消行动画 clearRows]
+    J --> K[计分 + 升级]
+    K --> B
+    B --> L{生成碰撞?}
+    L -->|是| M[游戏结束 gameOver]
+    L -->|否| C
+```
+
+#### Lock Delay 状态机
+
+```mermaid
+stateDiagram-v2
+    [*] --> Falling
+    Falling --> TouchingGround : 触底
+    TouchingGround --> LockDelay : 启动500ms延迟
+    LockDelay --> TouchingGround : 有效移动(重置, 最多15次)
+    LockDelay --> Locked : 超时/硬降
+    Locked --> [*]
+```
+
+#### 输入处理流程
+
+```mermaid
+flowchart LR
+    A[键盘输入] --> B[InputHandler\nDAS/ARR处理]
+    B --> C[gameStore Action\nmoveLeft/moveRight/rotate/...]
+    C --> D[State 更新\ngrid/currentBlock/score]
+    D --> E[GameBoard useEffect\nPixi 重绘游戏画面]
+    D --> F[React UI 组件\nScoreBoard/HoldBlock/NextBlock 重渲染]
+```
 ### Zustand 状态流
 
 项目使用三个独立的 Zustand Store，各司职、单向数据流：
