@@ -6,13 +6,14 @@ import { Tetromino, TetrominoType, Cell } from '../../types';
 import './GameBoard.css';
 import { ParticleSystem } from '../../game/core/ParticleSystem';
 
+// 常量区：定义棋盘格大小、行列数、画布尺寸及七种方块类型到颜色的映射表
 const CELL_SIZE = 30;
-const GRID_WIDTH = 10;
-const GRID_HEIGHT = 20;
-const BOARD_WIDTH = CELL_SIZE * GRID_WIDTH;
-const BOARD_HEIGHT = CELL_SIZE * GRID_HEIGHT;
+const GRID_WIDTH = 10;  // 棋盘列数（横向格子数）
+const GRID_HEIGHT = 20;  // 棋盘行数（纵向格子数）
+const BOARD_WIDTH = CELL_SIZE * GRID_WIDTH;  // 画布总宽度（像素）
+const BOARD_HEIGHT = CELL_SIZE * GRID_HEIGHT;  // 画布总高度（像素）
 
-const BLOCK_COLORS: Record<TetrominoType, number> = {
+const BLOCK_COLORS: Record<TetrominoType, number> = {  // 七种方块类型到十六进制颜色的映射表
   I: 0x00f0f0,
   O: 0xf0f000,
   T: 0xa000f0,
@@ -23,31 +24,34 @@ const BLOCK_COLORS: Record<TetrominoType, number> = {
 };
 
 const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
+  // Ref 引用区：持有 PixiJS Application 实例及各层级 Container 引用
   const appRef = useRef<PIXI.Application | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const gridContainerRef = useRef<PIXI.Container | null>(null);
-  const blockContainerRef = useRef<PIXI.Container | null>(null);
-  const ghostContainerRef = useRef<PIXI.Container | null>(null);
-  const animationFrameRef = useRef<number>(0);
-  const particleContainerRef = useRef<PIXI.Container | null>(null);
-  const particleSystemRef = useRef<ParticleSystem | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);  // 挂载 canvas 的 DOM 容器
+  const gridContainerRef = useRef<PIXI.Container | null>(null);  // 已锁定方块层容器
+  const blockContainerRef = useRef<PIXI.Container | null>(null);  // 当前活动方块层容器
+  const ghostContainerRef = useRef<PIXI.Container | null>(null);  // 幽灵方块（落点预览）层容器
+  const animationFrameRef = useRef<number>(0);  // 存储 requestAnimationFrame 句柄
+  const particleContainerRef = useRef<PIXI.Container | null>(null);  // 粒子层容器
+  const particleSystemRef = useRef<ParticleSystem | null>(null);  // 持有粒子系统实例
 
+  // Store 订阅区：从全局状态中读取棋盘数据、当前方块、游戏状态及消行动画相关信息
   const grid = useGameStore((state) => state.grid);
-  const currentBlock = useGameStore((state) => state.currentPiece);
-  const ghostBlock = useGameStore((state) => state.ghostPiece);
-  const gameState = useGameStore((state) => state.status);
-  const clearEffects = useGameStore((state) => state.clearEffects);
-  const consumeEffects = useGameStore((state) => state.consumeEffects);
-  const clearAnimationRows = useGameStore((state) => state.clearAnimationRows);
-  const clearAnimationActive = useGameStore((state) => state.clearAnimationActive);
-  const readyGoPhase = useGameStore((state) => state.readyGoPhase);
-  const clearLabel = useGameStore((state) => state.clearLabel);
+  const currentBlock = useGameStore((state) => state.currentPiece);  // 当前活动方块
+  const ghostBlock = useGameStore((state) => state.ghostPiece);  // 幽灵方块（落点预览）
+  const gameState = useGameStore((state) => state.status);  // 游戏状态（idle/playing/paused/gameover）
+  const clearEffects = useGameStore((state) => state.clearEffects);  // 待消费的消行特效队列
+  const consumeEffects = useGameStore((state) => state.consumeEffects);  // 清空消行特效队列
+  const clearAnimationRows = useGameStore((state) => state.clearAnimationRows);  // 消行动画涉及的行号
+  const clearAnimationActive = useGameStore((state) => state.clearAnimationActive);  // 消行动画是否激活中
+  const readyGoPhase = useGameStore((state) => state.readyGoPhase);  // READY/GO 倒计时阶段
+  const clearLabel = useGameStore((state) => state.clearLabel);  // 消行提示文字
 
+  // 本地状态区：管理 PixiJS 初始化、倒计时、消行标签显示及屏幕震动等本地 UI 状态
   const [isInitialized, setIsInitialized] = useState(false);
-  const isReadyGoActive = readyGoPhase === 'ready' || readyGoPhase === 'go';
-  const [showClearLabel, setShowClearLabel] = useState(false);
-  const [clearLabelText, setClearLabelText] = useState('');
-  const [shakeActive, setShakeActive] = useState(false);
+  const isReadyGoActive = readyGoPhase === 'ready' || readyGoPhase === 'go';  // 判断是否处于 READY/GO 倒计时阶段
+  const [showClearLabel, setShowClearLabel] = useState(false);  // 控制消行标签是否显示
+  const [clearLabelText, setClearLabelText] = useState('');  // 消行标签显示文字
+  const [shakeActive, setShakeActive] = useState(false);  // 控制屏幕震动效果是否激活
 
 
   // Handle clear label display
@@ -291,6 +295,7 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
     consumeEffects();
   }, [clearEffects, consumeEffects]);
 
+  // 辅助函数：根据游戏状态返回提示文字，以及返回 READY/GO 倒计时文字
   const getOverlayMessage = () => {
     if (gameState === 'idle') return '按回车键开始游戏';
     if (gameState === 'paused') return '游戏已暂停';
@@ -303,6 +308,7 @@ const GameBoard = React.forwardRef<HTMLDivElement>((_props, ref) => {
     if (readyGoPhase === 'go') return 'GO!';
     return '';
   };
+  // JSX 渲染区：最外层 div 根据 shakeActive 添加震动样式，pixi-container 挂载 canvas，idle/paused/gameover 状态显示半透明覆盖层，readyGo 阶段显示倒计时覆盖层，showClearLabel 时显示消行标签并根据文字内容添加对应样式类
   return (
     <div ref={ref} className={`game-board-container${shakeActive ? ' screen-shake' : ''}`}>
       <div ref={containerRef} className="pixi-container" />
